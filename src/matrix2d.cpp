@@ -21,16 +21,19 @@
 /* Is diagonal ------------------------------------------------------------- */
 #include "src/matrix2d.h"
 
-/* Interface to numerical recipes: svbksb ---------------------------------- */
-void svbksb(Matrix2D<DOUBLE> &u, Matrix1D<DOUBLE> &w, Matrix2D<DOUBLE> &v,
-            Matrix1D<DOUBLE> &b, Matrix1D<DOUBLE> &x)
-{
-    // Call to the numerical recipes routine. Results will be stored in X
-    svbksb(u.adaptForNumericalRecipes2(),
-           w.adaptForNumericalRecipes(),
-           v.adaptForNumericalRecipes2(),
-           u.mdimy, u.mdimx,
-           b.adaptForNumericalRecipes(),
-           x.adaptForNumericalRecipes());
-}
 
+namespace relion
+{
+	/* Interface to numerical recipes: svbksb ---------------------------------- */
+	void svbksb(Matrix2D<DOUBLE> &u, Matrix1D<DOUBLE> &w, Matrix2D<DOUBLE> &v,
+		Matrix1D<DOUBLE> &b, Matrix1D<DOUBLE> &x)
+	{
+		// Call to the numerical recipes routine. Results will be stored in X
+		svbksb(u.adaptForNumericalRecipes2(),
+			w.adaptForNumericalRecipes(),
+			v.adaptForNumericalRecipes2(),
+			u.mdimy, u.mdimx,
+			b.adaptForNumericalRecipes(),
+			x.adaptForNumericalRecipes());
+	}
+}

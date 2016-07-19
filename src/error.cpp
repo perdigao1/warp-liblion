@@ -46,18 +46,22 @@
  ***************************************************************************/
 #include "src/error.h"
 
-// Object Constructor
-RelionError::RelionError(const std::string &what, const std::string &fileArg, const long lineArg)
-{
-    msg = what;
-    file= fileArg;
-    line=lineArg;
-}
 
-// Show message
-std::ostream& operator << (std::ostream& o, RelionError& XE)
+namespace relion
 {
-    o << XE.msg << std::endl
-      << "File: " << XE.file << " line: " << XE.line << std::endl;
-    return o;
+	// Object Constructor
+	RelionError::RelionError(const std::string &what, const std::string &fileArg, const long lineArg)
+	{
+		msg = what;
+		file = fileArg;
+		line = lineArg;
+	}
+
+	// Show message
+	std::ostream& operator << (std::ostream& o, RelionError& XE)
+	{
+		o << XE.msg << std::endl
+			<< "File: " << XE.file << " line: " << XE.line << std::endl;
+		return o;
+	}
 }

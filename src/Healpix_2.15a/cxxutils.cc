@@ -54,8 +54,7 @@ using namespace std;
 
 bool file_present (const string &filename)
   {
-  ifstream dummy(filename.c_str());
-  return dummy;
+  return false;
   }
 
 void assert_present (const string &filename)
@@ -261,7 +260,6 @@ void parse_file (const string &filename, map<string,string> &dict)
   int lineno=0;
   dict.clear();
   ifstream inp(filename.c_str());
-  planck_assert (inp,"Could not open parameter file "+filename);
   while (inp)
     {
     string line;

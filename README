@@ -1,4 +1,3 @@
-vlion is a slightly vectorized (AVX & SSE instructions) version of the original RELION 1.4 code. It has been tested to compile and run on Intel's Haswell chips – both Core and Xeon brands. There, 3D refinement runs ca. 2.4x faster than the original double-precision code. AVX is supported on every Intel chip starting with Sandybridge, but the increase in speed may be different.
 
 Original RELION readme text:
 

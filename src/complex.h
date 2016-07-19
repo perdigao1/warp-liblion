@@ -23,63 +23,67 @@
 #include <cmath>
 #include "src/macros.h"
 
-class Complex
+
+namespace relion
 {
+	class Complex
+	{
 
 	public:
 
-	DOUBLE real;
-	DOUBLE imag;
+		DOUBLE real;
+		DOUBLE imag;
 
-    // Constructor
-	Complex(DOUBLE _r = 0.0, DOUBLE _i = 0.0);
+		// Constructor
+		Complex(DOUBLE _r = 0.0, DOUBLE _i = 0.0);
 
-    Complex operator+(Complex &op);
-    void operator+=(Complex &op);
+		Complex operator+(Complex &op);
+		void operator+=(Complex &op);
 
-    Complex operator-(Complex &op);
-    void operator-=(Complex &op);
+		Complex operator-(Complex &op);
+		void operator-=(Complex &op);
 
-    Complex operator*(Complex &op);
+		Complex operator*(Complex &op);
 
-    void operator*=(DOUBLE op);
+		void operator*=(DOUBLE op);
 
-    Complex operator*(DOUBLE op);
+		Complex operator*(DOUBLE op);
 
-    Complex operator/(Complex &op);
+		Complex operator/(Complex &op);
 
-    Complex operator/(DOUBLE op);
+		Complex operator/(DOUBLE op);
 
-    void operator/=(DOUBLE op);
+		void operator/=(DOUBLE op);
 
-    // Complex conjugated
-    Complex conj();
+		// Complex conjugated
+		Complex conj();
 
-    // Abs value: sqrt(real*real+imag*imag)
-    DOUBLE abs();
+		// Abs value: sqrt(real*real+imag*imag)
+		DOUBLE abs();
 
-    // Norm value: real*real+imag*imag
-    DOUBLE norm();
+		// Norm value: real*real+imag*imag
+		DOUBLE norm();
 
-    // Phase angle: atan2(imag,real)
-    DOUBLE arg();
+		// Phase angle: atan2(imag,real)
+		DOUBLE arg();
 
 
-};
+	};
 
-Complex conj(const Complex& op);
-DOUBLE abs(const Complex& op);
-DOUBLE norm(const Complex& op);
-DOUBLE arg(const Complex& op);
+	Complex conj(const Complex& op);
+	DOUBLE abs(const Complex& op);
+	DOUBLE norm(const Complex& op);
+	DOUBLE arg(const Complex& op);
 
-Complex operator+(const Complex& lhs, const Complex& rhs);
-Complex operator-(const Complex& lhs, const Complex& rhs);
-Complex operator*(const Complex& lhs, const Complex& rhs);
-Complex operator*(const Complex& lhs, const DOUBLE& val);
-Complex operator*(const DOUBLE& val, const Complex& rhs);
-Complex operator/(const Complex& lhs, const DOUBLE& val);
+	Complex operator+(const Complex& lhs, const Complex& rhs);
+	Complex operator-(const Complex& lhs, const Complex& rhs);
+	Complex operator*(const Complex& lhs, const Complex& rhs);
+	Complex operator*(const Complex& lhs, const DOUBLE& val);
+	Complex operator*(const DOUBLE& val, const Complex& rhs);
+	Complex operator/(const Complex& lhs, const DOUBLE& val);
 
-void operator+=(Complex& lhs, const Complex& rhs);
-void operator-=(Complex& lhs, const Complex& rhs);
+	void operator+=(Complex& lhs, const Complex& rhs);
+	void operator-=(Complex& lhs, const Complex& rhs);
+}
 
 #endif

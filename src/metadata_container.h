@@ -54,126 +54,129 @@
 //#include "src/xmipp/strings.h"
 #include "src/metadata_label.h"
 
-//useful to init values to zero
-//static DOUBLE zeroD=0.;
-//static DOUBLE    oneD=1.;
-//static bool  falseb=false;
 
-class MetaDataContainer
+namespace relion
 {
-    /** Container for attribute-value pairs.
-     * Note that void * allows to use mixed types */
-    std::map<EMDLabel, void *> values;
+	//useful to init values to zero
+	//static DOUBLE zeroD=0.;
+	//static DOUBLE    oneD=1.;
+	//static bool  falseb=false;
 
-    void insertVoidPtr(EMDLabel name, void * value);
-    void * getVoidPtr(EMDLabel name);
-    void copy(const MetaDataContainer &MDc);
+	class MetaDataContainer
+	{
+		/** Container for attribute-value pairs.
+		 * Note that void * allows to use mixed types */
+		std::map<EMDLabel, void *> values;
 
-public:
+		void insertVoidPtr(EMDLabel name, void * value);
+		void * getVoidPtr(EMDLabel name);
+		void copy(const MetaDataContainer &MDc);
 
-    /**Assignment operator
-     *
-     */
-    MetaDataContainer& operator =(const MetaDataContainer &MDc);
+	public:
 
-    /** Empty Constructor */
-    MetaDataContainer() {};
+		/**Assignment operator
+		 *
+		 */
+		MetaDataContainer& operator =(const MetaDataContainer &MDc);
 
-    /** Copy constructor */
-    MetaDataContainer(const MetaDataContainer &MDc);
+		/** Empty Constructor */
+		MetaDataContainer() {};
 
-    /** Destructor */
-    ~MetaDataContainer()
-    {
-    	clear();
-    }
+		/** Copy constructor */
+		MetaDataContainer(const MetaDataContainer &MDc);
 
-    /** Create a new attribute-value pair of string type */
-    void addValueFromString(const EMDLabel &label, const std::string &value);
+		/** Destructor */
+		~MetaDataContainer()
+		{
+			clear();
+		}
 
-    /** Creates a new label-value pair, and checks the type of the label is the same as that of value */
+		/** Create a new attribute-value pair of string type */
+		void addValueFromString(const EMDLabel &label, const std::string &value);
+
+		/** Creates a new label-value pair, and checks the type of the label is the same as that of value */
 #ifdef FLOAT_PRECISION
-    void addValue(EMDLabel name, const double &value);
+		void addValue(EMDLabel name, const double &value);
 #endif
-    void addValue(EMDLabel name, const DOUBLE &value);
-    void addValue(EMDLabel name, const int &value);
-    void addValue(EMDLabel name, const long int &value);
-    void addValue(EMDLabel name, const bool &value);
-    void addValue(EMDLabel name, const std::string &value);
+		void addValue(EMDLabel name, const DOUBLE &value);
+		void addValue(EMDLabel name, const int &value);
+		void addValue(EMDLabel name, const long int &value);
+		void addValue(EMDLabel name, const bool &value);
+		void addValue(EMDLabel name, const std::string &value);
 
-    /** Creates a new label-value pair, with the default value for the corresponding type */
-    void addDefaultValue(EMDLabel name);
+		/** Creates a new label-value pair, with the default value for the corresponding type */
+		void addDefaultValue(EMDLabel name);
 
-    /** clean metadatacontainer
-     *
-     */
-    void clear(void)
-    {
-        // Manually delete the map of pointers!
-        for (std::map<EMDLabel, void *>::iterator it = values.begin();
-             it != values.end(); ++it)
-        {
-        	if (EMDL::isDouble(it->first))
-                delete (DOUBLE*)it->second;
-            else if (EMDL::isInt(it->first))
-                delete (int*)it->second;
-            else if (EMDL::isLong(it->first))
-                delete (long int*)it->second;
-            else if (EMDL::isBool(it->first))
-                delete (bool*)it->second;
-            else if (EMDL::isString(it->first))
-                delete (std::string*)it->second;
-            else
-                REPORT_ERROR("Unrecognised label type in MetaDataContainer clear");
-        }
-    	values.clear();
-    }
+		/** clean metadatacontainer
+		 *
+		 */
+		void clear(void)
+		{
+			// Manually delete the map of pointers!
+			for (std::map<EMDLabel, void *>::iterator it = values.begin();
+				it != values.end(); ++it)
+			{
+				if (EMDL::isDouble(it->first))
+					delete (DOUBLE*)it->second;
+				else if (EMDL::isInt(it->first))
+					delete (int*)it->second;
+				else if (EMDL::isLong(it->first))
+					delete (long int*)it->second;
+				else if (EMDL::isBool(it->first))
+					delete (bool*)it->second;
+				else if (EMDL::isString(it->first))
+					delete (std::string*)it->second;
+				else
+					REPORT_ERROR("Unrecognised label type in MetaDataContainer clear");
+			}
+			values.clear();
+		}
 
-    /** Get a value for a given name.
-     *  If the metadata container contains the name,
-     *  the function will check the type of value with the type of the label and report an error if they do not match,
-     *  If they do match, the value will be get and the function returns true
-     *  If the name does not exist in the container, the function returns false
-     *
-     */
-    bool getValue( const EMDLabel name, DOUBLE &value);
-    bool getValue( const EMDLabel name, int &value);
-    bool getValue( const EMDLabel name, long int &value);
-    bool getValue( const EMDLabel name, bool &value);
-    bool getValue( const EMDLabel name, std::string &value);
+		/** Get a value for a given name.
+		 *  If the metadata container contains the name,
+		 *  the function will check the type of value with the type of the label and report an error if they do not match,
+		 *  If they do match, the value will be get and the function returns true
+		 *  If the name does not exist in the container, the function returns false
+		 *
+		 */
+		bool getValue(const EMDLabel name, DOUBLE &value);
+		bool getValue(const EMDLabel name, int &value);
+		bool getValue(const EMDLabel name, long int &value);
+		bool getValue(const EMDLabel name, bool &value);
+		bool getValue(const EMDLabel name, std::string &value);
 
-    // Check whether this label is present in the container
-    bool valueExists(EMDLabel name);
+		// Check whether this label is present in the container
+		bool valueExists(EMDLabel name);
 
-    //string is not part of the template because - is not defined for string
-    bool pairExists(EMDLabel name, const std::string &value);
+		//string is not part of the template because - is not defined for string
+		bool pairExists(EMDLabel name, const std::string &value);
 
-    template<class T>
-    bool pairExists(EMDLabel name, const T& value)
-    {
-        // Traverse all the structure looking for objects
-        // that satisfy search criteria
-        std::map<EMDLabel, void *>::iterator It;
+		template<class T>
+		bool pairExists(EMDLabel name, const T& value)
+		{
+			// Traverse all the structure looking for objects
+			// that satisfy search criteria
+			std::map<EMDLabel, void *>::iterator It;
 
-        It = values.find(name);
+			It = values.find(name);
 
-        if (It != values.end())
-        {
-            if (ABS( *((T *)(It->second)) - value )
-                    < XMIPP_EQUAL_ACCURACY)
-            {
-                return true;
-            }
-        }
+			if (It != values.end())
+			{
+				if (ABS(*((T *)(It->second)) - value)
+					< XMIPP_EQUAL_ACCURACY)
+				{
+					return true;
+				}
+			}
 
-        return false;
-    }
+			return false;
+		}
 
-    // Get all labels in this container
-    std::vector<EMDLabel> getLabels();
+		// Get all labels in this container
+		std::vector<EMDLabel> getLabels();
 
-    bool writeValueToStream(std::ostream &outstream, EMDLabel inputLabel);
-    bool writeValueToString(std::string &outString, EMDLabel inputLabel);
-};
-
+		bool writeValueToStream(std::ostream &outstream, EMDLabel inputLabel);
+		bool writeValueToString(std::string &outString, EMDLabel inputLabel);
+	};
+}
 #endif

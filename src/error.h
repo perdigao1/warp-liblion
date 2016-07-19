@@ -50,41 +50,44 @@
 #include <string>
 #include <iostream>
 
-/** Show message and throw exception
- * @ingroup ErrorHandling
- *
- * This macro shows the given message and exits with the error code.
- *
- * @code
- * if (...)
- *     REPORT_ERROR("Error 1");
- * @endcode
- */
+
+namespace relion
+{
+	/** Show message and throw exception
+	 * @ingroup ErrorHandling
+	 *
+	 * This macro shows the given message and exits with the error code.
+	 *
+	 * @code
+	 * if (...)
+	 *     REPORT_ERROR("Error 1");
+	 * @endcode
+	 */
 #define REPORT_ERROR(ErrormMsg) throw RelionError(ErrormMsg, __FILE__, __LINE__)
 
-/** Exception class
- * @ingroup ErrorHandling
- *
- * This is the class type for the errors thrown by the exceptions
- */
+	/** Exception class
+	 * @ingroup ErrorHandling
+	 *
+	 * This is the class type for the errors thrown by the exceptions
+	 */
 
-class RelionError
-{
-public:
-    /** Error code */
-    int __errno;
+	class RelionError
+	{
+	public:
+		/** Error code */
+		int __errno;
 
-    /** Message shown */
-    std::string msg;
+		/** Message shown */
+		std::string msg;
 
-    /** File produstd::cing the error */
-    std::string file;
+		/** File produstd::cing the error */
+		std::string file;
 
-    /** Line number */
-    long line;
+		/** Line number */
+		long line;
 
-    RelionError(const std::string& what, const std::string &fileArg, const long lineArg);
-    friend std::ostream& operator<<(std::ostream& o, RelionError& XE);
-};
-
+		RelionError(const std::string& what, const std::string &fileArg, const long lineArg);
+		friend std::ostream& operator<<(std::ostream& o, RelionError& XE);
+	};
+}
 #endif

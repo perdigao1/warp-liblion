@@ -75,6 +75,9 @@ public:
 	// CTF stuff for the reconstructions
 	bool do_ctf, ctf_phase_flipped, only_flip_phases, intact_ctf_first_peak;
 
+    bool use_custom_ctf;
+    bool output_custom_ctf;
+
 	// Pixel size (for B-factors)
 	DOUBLE angpix;
 
@@ -111,6 +114,8 @@ public:
 
 	// Reference volume reconstructed from the initially-polished particles to be used for per-particle CTF-refinement and beamtilt-refinement
 	Projector PPrefvol_half1, PPrefvol_half2;
+
+    Projector PPrefmask;
 
 	// Normalise the polished particles?
 	bool do_normalise;
@@ -181,7 +186,7 @@ public:
 	void writeStarFileRelativeWeights(FileName fn_star);
 
 	// Get the B-factor for a single-frame reconstruction
-	void calculateSingleFrameReconstruction(int iframe, int ihalf);
+	void calculateSingleFrameReconstruction(int this_group, int iframe, int ihalf, bool doctfinstead);
 
 	// Run standard post-processing (only unmasked FSC  on the single-frame reconstruction.
 	void postProcessSingleFrameReconstruction(int this_frame);

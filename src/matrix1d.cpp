@@ -44,36 +44,40 @@
 
 #include "src/matrix1d.h"
 
-Matrix1D<DOUBLE> vectorR2(DOUBLE x, DOUBLE y)
-{
-    Matrix1D<DOUBLE> result(2);
-    result( 0) = x;
-    result( 1) = y;
-    return result;
-}
 
-Matrix1D<DOUBLE> vectorR3(DOUBLE x, DOUBLE y, DOUBLE z)
+namespace relion
 {
-    Matrix1D<DOUBLE> result(3);
-    result( 0) = x;
-    result( 1) = y;
-    result( 2) = z;
-    return result;
-}
+	Matrix1D<DOUBLE> vectorR2(DOUBLE x, DOUBLE y)
+	{
+		Matrix1D<DOUBLE> result(2);
+		result(0) = x;
+		result(1) = y;
+		return result;
+	}
 
-// This function only makes sense after all code has been modified with 'sed' to allow single-precision runs
+	Matrix1D<DOUBLE> vectorR3(DOUBLE x, DOUBLE y, DOUBLE z)
+	{
+		Matrix1D<DOUBLE> result(3);
+		result(0) = x;
+		result(1) = y;
+		result(2) = z;
+		return result;
+	}
+
+	// This function only makes sense after all code has been modified with 'sed' to allow single-precision runs
 #ifdef FLOAT_PRECISION
-Matrix1D<float> vectorR3(double xx, double yy, double zz)
-{
-	return vectorR3((float)xx, (float)yy, (float)zz);
-}
+	Matrix1D<float> vectorR3(double xx, double yy, double zz)
+	{
+		return vectorR3((float)xx, (float)yy, (float)zz);
+	}
 #endif
 
-Matrix1D<int> vectorR3(int x, int y, int z)
-{
-    Matrix1D<int> result(3);
-    result( 0) = x;
-    result( 1) = y;
-    result( 2) = z;
-    return result;
+	Matrix1D<int> vectorR3(int x, int y, int z)
+	{
+		Matrix1D<int> result(3);
+		result(0) = x;
+		result(1) = y;
+		result(2) = z;
+		return result;
+	}
 }
