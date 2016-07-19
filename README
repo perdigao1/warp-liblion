@@ -1,3 +1,4 @@
+liblion is a subset of RELION 1.4 basic image processing functions that can be compiled and used in Visual Studio projects on Windows. To use it, add the root folder as include dir and #include "src/liblion.h". Link x64/(Debug|Release)/liblion.lib and fftw/libfftw3-3.lib, put libfftw3-3.dll in your runtime directory. All classes and methods are in the relion namespace.
 
 Original RELION readme text:
 
