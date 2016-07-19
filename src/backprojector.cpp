@@ -776,7 +776,7 @@ namespace relion
 		FourierTransformer transformer;
 		// The threads are giving me a headache. Let's switch them off
 		// Somehow I get lots of bad/non-reproducible errors when having these...
-		//transformer.setThreadsNumber(nr_threads);
+		transformer.setThreadsNumber(nr_threads);
 		MultidimArray<Complex > Fconv;
 		MultidimArray<DOUBLE> Fweight;
 			// Fnewweight can become too large for a float: always keep this one in double-precision
@@ -1030,26 +1030,7 @@ namespace relion
         			DIRECT_A3D_ELEM(Fnewweight, k, i, j) /= w;
 				}
 			}
-
-	#ifdef DEBUG_RECONSTRUCT
-			std::cerr << " PREWEIGHTING ITERATION: "<< iter + 1 << " OF " << max_iter_preweight << std::endl;
-			// report of maximum and minimum values of current conv_weight
-			std::cerr << " corr_avg= " << corr_avg / corr_nn << std::endl;
-			std::cerr << " corr_min= " << corr_min << std::endl;
-			std::cerr << " corr_max= " << corr_max << std::endl;
-	#endif
 		}
-
-	#ifdef DEBUG_RECONSTRUCT
-		Image<double> tttt;
-		tttt()=Fnewweight;
-		tttt.write("reconstruct_gridding_weight.spi");
-		FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(Fconv)
-		{
-			DIRECT_MULTIDIM_ELEM(ttt(), n) = abs(DIRECT_MULTIDIM_ELEM(Fconv, n));
-		}
-		ttt.write("reconstruct_gridding_correction_term.spi");
-	#endif
 
 		// Clear memory
 		Fweight.clear();
@@ -1073,70 +1054,6 @@ namespace relion
 		// Clear memory
 		Fnewweight.clear();
 
-	// Gridding theory says one now has to interpolate the fine grid onto the coarse one using a blob kernel
-	// and then do the inverse transform and divide by the FT of the blob (i.e. do the gridding correction)
-	// In practice, this gives all types of artefacts (perhaps I never found the right implementation?!)
-	// Therefore, window the Fourier transform and then do the inverse transform
-	//#define RECONSTRUCT_CONVOLUTE_BLOB
-	#ifdef RECONSTRUCT_CONVOLUTE_BLOB
-
-		// Apply the same blob-convolution as above to the data array
-		// Mask real-space map beyond its original size to prevent aliasing in the downsampling step below
-		convoluteBlobRealSpace(transformer, true);
-
-		// Now just pick every 3rd pixel in Fourier-space (i.e. down-sample)
-		// and do a final inverse FT
-		if (ref_dim == 2)
-			vol_out.resize(ori_size, ori_size);
-		else
-			vol_out.resize(ori_size, ori_size, ori_size);
-
-		FourierTransformer transformer2;
-		MultidimArray<Complex > Ftmp;
-		transformer2.setReal(vol_out); // cannot use the first transformer because Fconv is inside there!!
-		transformer2.getFourierAlias(Ftmp);
-		FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Ftmp)
-		{
-			if (kp * kp + ip * ip + jp * jp < r_max * r_max)
-			{
-				DIRECT_A3D_ELEM(Ftmp, k, i, j) = FFTW_ELEM(Fconv, kp * padding_factor, ip * padding_factor, jp * padding_factor);
-			}
-			else
-			{
-				DIRECT_A3D_ELEM(Ftmp, k, i, j) = 0.;
-			}
-		}
-
-		// inverse FFT leaves result in vol_out
-		transformer2.inverseFourierTransform();
-
-		// Shift the map back to its origin
-		CenterFFT(vol_out, false);
-
-		// Un-normalize FFTW (because original FFTs were done with the size of 2D FFTs)
-		if (ref_dim==3)
-			vol_out /= ori_size;
-
-		// Mask out corners to prevent aliasing artefacts
-		softMaskOutsideMap(vol_out);
-
-		// Gridding correction for the blob
-		DOUBLE normftblob = tab_ftblob(0.);
-		FOR_ALL_ELEMENTS_IN_ARRAY3D(vol_out)
-		{
-
-			DOUBLE r = sqrt((DOUBLE)(k*k+i*i+j*j));
-			DOUBLE rval = r / (ori_size * padding_factor);
-			A3D_ELEM(vol_out, k, i, j) /= tab_ftblob(rval) / normftblob;
-			//if (k==0 && i==0)
-			//	std::cerr << " j= " << j << " rval= " << rval << " tab_ftblob(rval) / normftblob= " << tab_ftblob(rval) / normftblob << std::endl;
-		}
-
-
-	#else
-
-
-
 		// rather than doing the blob-convolution to downsample the data array, do a windowing operation:
 		// This is the same as convolution with a SINC. It seems to give better maps.
 		// Then just make the blob look as much as a SINC as possible....
@@ -1151,17 +1068,9 @@ namespace relion
 		// Pass the transformer to prevent making and clearing a new one before clearing the one declared above....
 		// The latter may give memory problems as detected by electric fence....
 		windowToOridimRealSpace(transformer, Fconv, vol_out, nr_threads);
-
-	#endif
-
-	#ifdef DEBUG_RECONSTRUCT
-		ttt()=vol_out;
-		ttt.write("reconstruct_before_gridding_correction.spi");
-	#endif
-
+		
 		// Correct for the linear/nearest-neighbour interpolation that led to the data array
 		griddingCorrect(vol_out);
-
 
 		// If the tau-values were calculated based on the FSC, then now re-calculate the power spectrum of the actual reconstruction
 		if (update_tau2_with_fsc)
@@ -1198,12 +1107,7 @@ namespace relion
 		}
 
 		// Completely empty the transformer object
-		transformer.cleanup();
-
-	#ifdef DEBUG_RECONSTRUCT
-		std::cerr<<"done with reconstruct"<<std::endl;
-	#endif
-
+		//transformer.cleanup();
 	}
 
 	void BackProjector::enforceHermitianSymmetry(MultidimArray<Complex > &my_data,

@@ -125,37 +125,44 @@ namespace relion
 
 	void FourierTransformer::destroyPlans()
 	{
+#pragma omp critical(Plan)
+		{
+			// Anything to do with plans has to be protected for threads!
+#ifdef FLOAT_PRECISION
+			if (fPlanForward !=NULL)
+				fftwf_destroy_plan(fPlanForward);
+			if (fPlanBackward!=NULL)
+				fftwf_destroy_plan(fPlanBackward);
+#else
+			if (fPlanForward != NULL)
+				fftw_destroy_plan(fPlanForward);
+			if (fPlanBackward != NULL)
+				fftw_destroy_plan(fPlanBackward);
 
-		// Anything to do with plans has to be protected for threads!
-	#ifdef FLOAT_PRECISION
-		if (fPlanForward !=NULL)
-   		fftwf_destroy_plan(fPlanForward);
-		if (fPlanBackward!=NULL)
-   		fftwf_destroy_plan(fPlanBackward);
-	#else
-		if (fPlanForward !=NULL)
-   		fftw_destroy_plan(fPlanForward);
-		if (fPlanBackward!=NULL)
-   		fftw_destroy_plan(fPlanBackward);
-	#endif
-
+			fPlanForward = NULL;
+			fPlanBackward = NULL;
+#endif
+		}
 	}
 
 	void FourierTransformer::setThreadsNumber(int tNumber)
 	{
-		if (tNumber!=1)
+#pragma omp critical(Plan)
 		{
-			threadsSetOn=true;
-			nthreads = tNumber;
-	#ifdef FLOAT_PRECISION
-			if(fftwf_init_threads()==0)
-				REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
-			fftwf_plan_with_nthreads(nthreads);
-	#else
-			if(fftw_init_threads()==0)
-				REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
-			fftw_plan_with_nthreads(nthreads);
-	#endif
+			if (tNumber != 1)
+			{
+				threadsSetOn = true;
+				nthreads = tNumber;
+#ifdef FLOAT_PRECISION
+				if(fftwf_init_threads()==0)
+					REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
+				fftwf_plan_with_nthreads(nthreads);
+#else
+				if (fftw_init_threads() == 0)
+					REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
+				fftw_plan_with_nthreads(nthreads);
+#endif
+			}
 		}
 	}
 
@@ -211,20 +218,24 @@ namespace relion
 
 			// Destroy both forward and backward plans if they already exist
 			destroyPlans();
-			// Make new plans
-	#ifdef FLOAT_PRECISION
-			fPlanForward = fftwf_plan_dft_r2c(ndim, N, MULTIDIM_ARRAY(*fReal),
-											 (fftwf_complex*) MULTIDIM_ARRAY(fFourier), FFTW_ESTIMATE);
-			fPlanBackward = fftwf_plan_dft_c2r(ndim, N,
-											  (fftwf_complex*) MULTIDIM_ARRAY(fFourier), MULTIDIM_ARRAY(*fReal),
-											  FFTW_ESTIMATE);
-	#else
-			fPlanForward = fftw_plan_dft_r2c(ndim, N, MULTIDIM_ARRAY(*fReal),
-											 (fftw_complex*) MULTIDIM_ARRAY(fFourier), FFTW_ESTIMATE);
-			fPlanBackward = fftw_plan_dft_c2r(ndim, N,
-											  (fftw_complex*) MULTIDIM_ARRAY(fFourier), MULTIDIM_ARRAY(*fReal),
-											  FFTW_ESTIMATE);
-	#endif
+
+#pragma omp critical(Plan)
+			{
+				// Make new plans
+#ifdef FLOAT_PRECISION
+				fPlanForward = fftwf_plan_dft_r2c(ndim, N, MULTIDIM_ARRAY(*fReal),
+					(fftwf_complex*) MULTIDIM_ARRAY(fFourier), FFTW_ESTIMATE);
+				fPlanBackward = fftwf_plan_dft_c2r(ndim, N,
+					(fftwf_complex*) MULTIDIM_ARRAY(fFourier), MULTIDIM_ARRAY(*fReal),
+					FFTW_ESTIMATE);
+#else
+				fPlanForward = fftw_plan_dft_r2c(ndim, N, MULTIDIM_ARRAY(*fReal),
+					(fftw_complex*)MULTIDIM_ARRAY(fFourier), FFTW_ESTIMATE);
+				fPlanBackward = fftw_plan_dft_c2r(ndim, N,
+					(fftw_complex*)MULTIDIM_ARRAY(fFourier), MULTIDIM_ARRAY(*fReal),
+					FFTW_ESTIMATE);
+#endif
+			}
 
 			if (fPlanForward == NULL || fPlanBackward == NULL)
 				REPORT_ERROR("FFTW plans cannot be created");
@@ -276,37 +287,40 @@ namespace relion
 				break;
 			}
 
-	#ifdef FLOAT_PRECISION
-			if (fPlanForward!=NULL)
-				fftwf_destroy_plan(fPlanForward);
-			fPlanForward=NULL;
-			fPlanForward = fftwf_plan_dft(ndim, N, (fftwf_complex*) MULTIDIM_ARRAY(*fComplex),
-										 (fftwf_complex*) MULTIDIM_ARRAY(fFourier), FFTW_FORWARD, FFTW_ESTIMATE);
-			if (fPlanBackward!=NULL)
-				fftwf_destroy_plan(fPlanBackward);
-			fPlanBackward=NULL;
-			fPlanBackward = fftwf_plan_dft(ndim, N, (fftwf_complex*) MULTIDIM_ARRAY(fFourier),
-										  (fftwf_complex*) MULTIDIM_ARRAY(*fComplex), FFTW_BACKWARD, FFTW_ESTIMATE);
-			if (fPlanForward == NULL || fPlanBackward == NULL)
-				REPORT_ERROR("FFTW plans cannot be created");
-			delete [] N;
-			complexDataPtr=MULTIDIM_ARRAY(*fComplex);
-	#else
-			if (fPlanForward!=NULL)
-				fftw_destroy_plan(fPlanForward);
-			fPlanForward=NULL;
-			fPlanForward = fftw_plan_dft(ndim, N, (fftw_complex*) MULTIDIM_ARRAY(*fComplex),
-										 (fftw_complex*) MULTIDIM_ARRAY(fFourier), FFTW_FORWARD, FFTW_ESTIMATE);
-			if (fPlanBackward!=NULL)
-				fftw_destroy_plan(fPlanBackward);
-			fPlanBackward=NULL;
-			fPlanBackward = fftw_plan_dft(ndim, N, (fftw_complex*) MULTIDIM_ARRAY(fFourier),
-										  (fftw_complex*) MULTIDIM_ARRAY(*fComplex), FFTW_BACKWARD, FFTW_ESTIMATE);
-			if (fPlanForward == NULL || fPlanBackward == NULL)
-				REPORT_ERROR("FFTW plans cannot be created");
-			delete [] N;
-			complexDataPtr=MULTIDIM_ARRAY(*fComplex);
-	#endif
+//#pragma omp critical(Plan)
+			{
+#ifdef FLOAT_PRECISION
+				if (fPlanForward!=NULL)
+					fftwf_destroy_plan(fPlanForward);
+				fPlanForward=NULL;
+				fPlanForward = fftwf_plan_dft(ndim, N, (fftwf_complex*) MULTIDIM_ARRAY(*fComplex),
+					(fftwf_complex*) MULTIDIM_ARRAY(fFourier), FFTW_FORWARD, FFTW_ESTIMATE);
+				if (fPlanBackward!=NULL)
+					fftwf_destroy_plan(fPlanBackward);
+				fPlanBackward=NULL;
+				fPlanBackward = fftwf_plan_dft(ndim, N, (fftwf_complex*) MULTIDIM_ARRAY(fFourier),
+					(fftwf_complex*) MULTIDIM_ARRAY(*fComplex), FFTW_BACKWARD, FFTW_ESTIMATE);
+				if (fPlanForward == NULL || fPlanBackward == NULL)
+					REPORT_ERROR("FFTW plans cannot be created");
+				delete [] N;
+				complexDataPtr=MULTIDIM_ARRAY(*fComplex);
+#else
+				if (fPlanForward != NULL)
+					fftw_destroy_plan(fPlanForward);
+				fPlanForward = NULL;
+				fPlanForward = fftw_plan_dft(ndim, N, (fftw_complex*)MULTIDIM_ARRAY(*fComplex),
+					(fftw_complex*)MULTIDIM_ARRAY(fFourier), FFTW_FORWARD, FFTW_ESTIMATE);
+				if (fPlanBackward != NULL)
+					fftw_destroy_plan(fPlanBackward);
+				fPlanBackward = NULL;
+				fPlanBackward = fftw_plan_dft(ndim, N, (fftw_complex*)MULTIDIM_ARRAY(fFourier),
+					(fftw_complex*)MULTIDIM_ARRAY(*fComplex), FFTW_BACKWARD, FFTW_ESTIMATE);
+				if (fPlanForward == NULL || fPlanBackward == NULL)
+					REPORT_ERROR("FFTW plans cannot be created");
+				delete[] N;
+				complexDataPtr = MULTIDIM_ARRAY(*fComplex);
+#endif
+			}
 		}
 	}
 
