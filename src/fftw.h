@@ -46,7 +46,7 @@
 #ifndef __XmippFFTW_H
 #define __XmippFFTW_H
 
-#include <fftw/fftw3.h>
+#include <fftw/cufftw.h>
 #include "src/multidim_array.h"
 #include "src/funcs.h"
 #include "src/tabfuncs.h"
@@ -490,18 +490,21 @@ namespace relion
 		else if (v.getDim() == 3)
 		{
 			// 3D
-			MultidimArray< T > aux;
 			int l, shift;
 
 			// Shift in the X direction
 			l = XSIZE(v);
-			aux.resize(l);
 			shift = (int)(l / 2);
 
 			if (!forward)
 				shift = -shift;
 
+#pragma omp parallel for
 			for (int k = 0; k < ZSIZE(v); k++)
+			{
+				MultidimArray< T > aux;
+				aux.resize(l);
+
 				for (int i = 0; i < YSIZE(v); i++)
 				{
 					// Shift the input in an auxiliar vector
@@ -521,16 +524,21 @@ namespace relion
 					for (int j = 0; j < l; j++)
 						DIRECT_A3D_ELEM(v, k, i, j) = DIRECT_A1D_ELEM(aux, j);
 				}
+			}
 
 			// Shift in the Y direction
 			l = YSIZE(v);
-			aux.resize(l);
 			shift = (int)(l / 2);
 
 			if (!forward)
 				shift = -shift;
 
+#pragma omp parallel for
 			for (int k = 0; k < ZSIZE(v); k++)
+			{
+				MultidimArray< T > aux;
+				aux.resize(l);
+
 				for (int j = 0; j < XSIZE(v); j++)
 				{
 					// Shift the input in an auxiliar vector
@@ -550,16 +558,21 @@ namespace relion
 					for (int i = 0; i < l; i++)
 						DIRECT_A3D_ELEM(v, k, i, j) = DIRECT_A1D_ELEM(aux, i);
 				}
+			}
 
 			// Shift in the Z direction
 			l = ZSIZE(v);
-			aux.resize(l);
 			shift = (int)(l / 2);
 
 			if (!forward)
 				shift = -shift;
 
+#pragma omp parallel for
 			for (int i = 0; i < YSIZE(v); i++)
+			{
+				MultidimArray< T > aux;
+				aux.resize(l);
+
 				for (int j = 0; j < XSIZE(v); j++)
 				{
 					// Shift the input in an auxiliar vector
@@ -578,6 +591,7 @@ namespace relion
 					for (int k = 0; k < l; k++)
 						DIRECT_A3D_ELEM(v, k, i, j) = DIRECT_A1D_ELEM(aux, k);
 				}
+			}
 		}
 		else
 		{

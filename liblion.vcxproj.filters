@@ -170,9 +170,6 @@
     <ClInclude Include="src\avx_helper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\liblion.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Healpix_2.15a\arr.h">
       <Filter>Healpix</Filter>
     </ClInclude>
@@ -202,6 +199,9 @@
     </ClInclude>
     <ClInclude Include="src\Healpix_2.15a\vec3.h">
       <Filter>Healpix</Filter>
+    </ClInclude>
+    <ClInclude Include="liblion.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

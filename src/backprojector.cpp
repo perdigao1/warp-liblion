@@ -779,8 +779,8 @@ namespace relion
 		transformer.setThreadsNumber(nr_threads);
 		MultidimArray<Complex > Fconv;
 		MultidimArray<DOUBLE> Fweight;
-			// Fnewweight can become too large for a float: always keep this one in double-precision
-			MultidimArray<double> Fnewweight;
+		// Fnewweight can become too large for a float: always keep this one in double-precision
+		MultidimArray<double> Fnewweight;
 
 		int max_r2 = r_max * r_max * padding_factor * padding_factor;
 
@@ -858,7 +858,7 @@ namespace relion
 		}
 
 		// Average (inverse of) sigma2 in reconstruction
-		FOR_ALL_DIRECT_ELEMENTS_IN_ARRAY1D(sigma2)
+		/*FOR_ALL_DIRECT_ELEMENTS_IN_ARRAY1D(sigma2)
 		{
 			if (DIRECT_A1D_ELEM(sigma2, i) > 1e-10)
 				DIRECT_A1D_ELEM(sigma2, i) = DIRECT_A1D_ELEM(counter, i) / DIRECT_A1D_ELEM(sigma2, i);
@@ -869,7 +869,7 @@ namespace relion
 				std::cerr << " DIRECT_A1D_ELEM(sigma2, i)= " << DIRECT_A1D_ELEM(sigma2, i) << std::endl;
 				REPORT_ERROR("BackProjector::reconstruct: ERROR: unexpectedly small, yet non-zero sigma2 value, this should not happen...a");
 			}
-		}
+		}*/
 
 		if (update_tau2_with_fsc)
 		{
@@ -1005,6 +1005,7 @@ namespace relion
 			// Here the initial weights are also 1 (see initialisation Fnewweight above),
 			// but each "sampling point" counts "Fweight" times!
 			// That is why Fnewweight is multiplied by Fweight prior to the convolution
+#pragma omp parallel for
 			FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(Fconv)
 			{
 				DIRECT_MULTIDIM_ELEM(Fconv, n) = DIRECT_MULTIDIM_ELEM(Fnewweight, n) * DIRECT_MULTIDIM_ELEM(Fweight, n);
@@ -1014,21 +1015,22 @@ namespace relion
 			// Note that convoluteRealSpace acts on the complex array inside the transformer
 			convoluteBlobRealSpace(transformer);
 
-			DOUBLE w, corr_min = 99.e99, corr_max = -99.e99, corr_avg=0., corr_nn=0.;
-			FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Fconv)
+#pragma omp parallel for
+			for (long int k = 0; k < ZSIZE(Fconv); k++)
 			{
-				if (kp * kp + ip * ip + jp * jp < max_r2)
-				{
-        			// Make sure no division by zero can occur....
-        			w = XMIPP_MAX(1e-6, abs(DIRECT_A3D_ELEM(Fconv, k, i, j)));
-        			// Monitor min, max and avg conv_weight
-        			corr_min = XMIPP_MIN(corr_min, w);
-        			corr_max = XMIPP_MAX(corr_max, w);
-        			corr_avg += w;
-        			corr_nn += 1.;
-        			// Apply division of Eq. [14] in Pipe & Menon (1999)
-        			DIRECT_A3D_ELEM(Fnewweight, k, i, j) /= w;
-				}
+				long int kp = (k < XSIZE(Fconv)) ? k : k - ZSIZE(Fconv);
+
+				for (long int i = 0, ip = 0; i < YSIZE(Fconv); i++, ip = (i < XSIZE(Fconv)) ? i : i - YSIZE(Fconv)) \
+					for (long int j = 0, jp = 0; j < XSIZE(Fconv); j++, jp = j)
+					{
+						if (kp * kp + ip * ip + jp * jp < max_r2)
+						{
+							// Make sure no division by zero can occur....
+							DOUBLE w = XMIPP_MAX(1e-6, abs(DIRECT_A3D_ELEM(Fconv, k, i, j)));
+							// Apply division of Eq. [14] in Pipe & Menon (1999)
+							DIRECT_A3D_ELEM(Fnewweight, k, i, j) /= w;
+						}
+					}
 			}
 		}
 
@@ -1314,6 +1316,7 @@ namespace relion
 		//blob.alpha = 15;
 
 		// Multiply with FT of the blob kernel
+#pragma omp parallel for
 		FOR_ALL_DIRECT_ELEMENTS_IN_ARRAY3D(Mconv)
 		{
 			int kp = (k < padhdim) ? k : k - pad_size;

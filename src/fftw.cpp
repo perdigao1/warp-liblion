@@ -106,9 +106,9 @@ namespace relion
 		// Then clean up all the junk fftw keeps lying around
 		// SOMEHOW THE FOLLOWING IS NOT ALLOWED WHEN USING MULTPLE TRANSFORMER OBJECTS....
 	#ifdef FLOAT_PRECISION
-		if (threadsSetOn)
-    		fftwf_cleanup_threads();
-		else
+		//if (threadsSetOn)
+    	//	fftwf_cleanup_threads();
+		//else
     		fftwf_cleanup();
 	#else
 		if (threadsSetOn)
@@ -154,13 +154,13 @@ namespace relion
 				threadsSetOn = true;
 				nthreads = tNumber;
 #ifdef FLOAT_PRECISION
-				if(fftwf_init_threads()==0)
-					REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
-				fftwf_plan_with_nthreads(nthreads);
+				//if(fftwf_init_threads()==0)
+				//	REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
+				//fftwf_plan_with_nthreads(nthreads);
 #else
-				if (fftw_init_threads() == 0)
-					REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
-				fftw_plan_with_nthreads(nthreads);
+				//if (fftw_init_threads() == 0)
+				//	REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
+				//fftw_plan_with_nthreads(nthreads);
 #endif
 			}
 		}
@@ -349,8 +349,8 @@ namespace relion
 			else
 				REPORT_ERROR("No complex nor real data defined");
 
-			FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(fFourier)
-				DIRECT_MULTIDIM_ELEM(fFourier,n) /= size;
+			//FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(fFourier)
+			//	DIRECT_MULTIDIM_ELEM(fFourier,n) /= size;
 		}
 		else if (sign == FFTW_BACKWARD)
 		{

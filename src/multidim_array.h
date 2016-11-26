@@ -54,6 +54,7 @@
 #include "src/matrix1d.h"
 #include "src/matrix2d.h"
 #include "src/complex.h"
+#include "cuda_runtime.h"
 
 
 namespace relion
@@ -680,6 +681,7 @@ namespace relion
 			}
 			else
 			{
+				//cudaMallocHost((void**)&data, NEXT_MULT_OF_8(nzyxdim) * sizeof(T));
 				data = (T*)_aligned_malloc(NEXT_MULT_OF_8(nzyxdim) * sizeof(T), 32);
 				if (data == NULL)
 					REPORT_ERROR("Could not allocate memory");
@@ -712,6 +714,7 @@ namespace relion
 			}
 			else
 			{
+				//cudaMallocHost((void**)&data, NEXT_MULT_OF_8(nzyxdim) * sizeof(T));
 				data = (T*)_aligned_malloc(NEXT_MULT_OF_8(nzyxdim) * sizeof(T), 32);
 				if (data == NULL)
 					REPORT_ERROR("Could not allocate memory");
@@ -745,6 +748,7 @@ namespace relion
 				}
 				else
 					_aligned_free(data);
+					//cudaFreeHost(data);
 			}
 			data=NULL;
 			nzyxdimAlloc = 0;
@@ -911,21 +915,65 @@ namespace relion
 
 			// Copy needed elements, fill with 0 if necessary
 			for (long int l = 0; l < Ndim; l++)
-				for (long int k = 0; k < Zdim; k++)
-					for (long int i = 0; i < Ydim; i++)
-						for (long int j = 0; j < Xdim; j++)
-						{
-							T val;
-							if (k >= ZSIZE(*this))
-								val = 0;
-							else if (i >= YSIZE(*this))
-								val = 0;
-							else if (j >= XSIZE(*this))
-								val = 0;
-							else
-								val = DIRECT_A3D_ELEM(*this, k, i, j);
-							new_data[l*ZYXdim + k*YXdim+i*Xdim+j] = val;
-						}
+			{
+				if (Zdim > 1)
+				{
+#pragma omp parallel for
+					for (long int k = 0; k < Zdim; k++)
+						for (long int i = 0; i < Ydim; i++)
+							for (long int j = 0; j < Xdim; j++)
+							{
+								T val;
+								if (k >= ZSIZE(*this))
+									val = 0;
+								else if (i >= YSIZE(*this))
+									val = 0;
+								else if (j >= XSIZE(*this))
+									val = 0;
+								else
+									val = DIRECT_A3D_ELEM(*this, k, i, j);
+								new_data[l*ZYXdim + k*YXdim + i*Xdim + j] = val;
+							}
+				}
+				else if (Ydim > 1)
+				{
+					for (long int k = 0; k < Zdim; k++)
+#pragma omp parallel for
+						for (long int i = 0; i < Ydim; i++)
+							for (long int j = 0; j < Xdim; j++)
+							{
+								T val;
+								if (k >= ZSIZE(*this))
+									val = 0;
+								else if (i >= YSIZE(*this))
+									val = 0;
+								else if (j >= XSIZE(*this))
+									val = 0;
+								else
+									val = DIRECT_A3D_ELEM(*this, k, i, j);
+								new_data[l*ZYXdim + k*YXdim + i*Xdim + j] = val;
+							}
+				}
+				else
+				{
+					for (long int k = 0; k < Zdim; k++)
+						for (long int i = 0; i < Ydim; i++)
+#pragma omp parallel for
+							for (long int j = 0; j < Xdim; j++)
+							{
+								T val;
+								if (k >= ZSIZE(*this))
+									val = 0;
+								else if (i >= YSIZE(*this))
+									val = 0;
+								else if (j >= XSIZE(*this))
+									val = 0;
+								else
+									val = DIRECT_A3D_ELEM(*this, k, i, j);
+								new_data[l*ZYXdim + k*YXdim + i*Xdim + j] = val;
+							}
+				}
+			}
 
 			// deallocate old vector
 			coreDeallocate();

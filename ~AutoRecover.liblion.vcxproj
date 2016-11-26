@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\backprojector.cpp" />
+    <ClCompile Include="src\backprojector_temp.cpp" />
     <ClCompile Include="src\complex.cpp" />
     <ClCompile Include="src\ctf.cpp" />
     <ClCompile Include="src\error.cpp" />

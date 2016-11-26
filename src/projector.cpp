@@ -80,12 +80,13 @@ namespace relion
 	}
 
 	// Fill data array with oversampled Fourier transform, and calculate its power spectrum
-	void Projector::computeFourierTransformMap(MultidimArray<DOUBLE> &vol_in, MultidimArray<DOUBLE> &power_spectrum, int current_size, int nr_threads, bool do_gridding)
+	void Projector::computeFourierTransformMap(MultidimArray<DOUBLE> &vol_in, MultidimArray<DOUBLE> &power_spectrum, int current_size, int nr_threads, bool do_gridding, bool do_statistics, bool output_centered)
 	{
 
 		MultidimArray<DOUBLE> Mpad;
 		MultidimArray<Complex > Faux;
 		FourierTransformer transformer;
+		transformer.setThreadsNumber(nr_threads);
 		// DEBUGGING: multi-threaded FFTWs are giving me a headache?
 		// For a long while: switch them off!
 		//transformer.setThreadsNumber(nr_threads);
@@ -115,6 +116,8 @@ namespace relion
 			REPORT_ERROR("Projector::computeFourierTransformMap%%ERROR: Dimension of the data array should be 2 or 3");
 		}
 
+		normfft = 1;
+
 		// First do a gridding pre-correction on the real-space map:
 		// Divide by the inverse Fourier transform of the interpolator in Fourier-space
 		// 10feb11: at least in 2D case, this seems to be the wrong thing to do!!!
@@ -125,8 +128,12 @@ namespace relion
 		// Pad translated map with zeros
 		vol_in.setXmippOrigin();
 		Mpad.setXmippOrigin();
-		FOR_ALL_ELEMENTS_IN_ARRAY3D(vol_in) // This will also work for 2D
-			A3D_ELEM(Mpad, k, i, j) = A3D_ELEM(vol_in, k, i, j);
+
+#pragma omp parallel for
+		for (long int k = STARTINGZ(vol_in); k <= FINISHINGZ(vol_in); k++)
+			for (long int i = STARTINGY(vol_in); i <= FINISHINGY(vol_in); i++)
+				for (long int j = STARTINGX(vol_in); j <= FINISHINGX(vol_in); j++)
+					A3D_ELEM(Mpad, k, i, j) = A3D_ELEM(vol_in, k, i, j);
 
 		// Translate padded map to put origin of FT in the center
 		CenterFFT(Mpad, true);
@@ -134,44 +141,83 @@ namespace relion
 		// Calculate the oversampled Fourier transform
 		transformer.FourierTransform(Mpad, Faux, false);
 
+		//DOUBLE padnorm = 1. / (padding_factor)
+		//FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(Faux)
+		//	DIRECT_MULTIDIM_ELEM(Faux, n) /= size;
+
 		// Free memory: Mpad no longer needed
 		Mpad.clear();
 
 		// Resize data array to the right size and initialise to zero
 		initZeros(current_size);
 
-		// Fill data only for those points with distance to origin less than max_r
-		// (other points will be zero because of initZeros() call above
-		// Also calculate radial power spectrum
-		power_spectrum.initZeros(ori_size / 2 + 1);
-		MultidimArray<DOUBLE> counter(power_spectrum);
-		counter.initZeros();
-
 		int max_r2 = r_max * r_max * padding_factor * padding_factor;
-		FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Faux) // This will also work for 2D
+		if (do_statistics)
 		{
-			int r2 = kp*kp + ip*ip + jp*jp;
-			// The Fourier Transforms are all "normalised" for 2D transforms of size = ori_size x ori_size
-			if (r2 <= max_r2)
-			{
-				// Set data array
-				A3D_ELEM(data, kp, ip, jp) = DIRECT_A3D_ELEM(Faux, k, i, j) * normfft;
+			// Fill data only for those points with distance to origin less than max_r
+			// (other points will be zero because of initZeros() call above
+			// Also calculate radial power spectrum
+			power_spectrum.initZeros(ori_size / 2 + 1);
+			MultidimArray<DOUBLE> counter(power_spectrum);
+			counter.initZeros();
 
-				// Calculate power spectrum
-				int ires = ROUND(sqrt((DOUBLE)r2) / padding_factor);
-				// Factor two because of two-dimensionality of the complex plane
-				DIRECT_A1D_ELEM(power_spectrum, ires) += norm(A3D_ELEM(data, kp, ip, jp)) / 2.;
-				DIRECT_A1D_ELEM(counter, ires) += 1.;
+			FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Faux) // This will also work for 2D
+			{
+				int r2 = kp*kp + ip*ip + jp*jp;
+				// The Fourier Transforms are all "normalised" for 2D transforms of size = ori_size x ori_size
+				if (r2 <= max_r2)
+				{
+					// Set data array
+					A3D_ELEM(data, kp, ip, jp) = DIRECT_A3D_ELEM(Faux, k, i, j) * normfft;
+
+					// Calculate power spectrum
+					int ires = ROUND(sqrt((DOUBLE)r2) / padding_factor);
+					// Factor two because of two-dimensionality of the complex plane
+					DIRECT_A1D_ELEM(power_spectrum, ires) += norm(A3D_ELEM(data, kp, ip, jp)) / 2.;
+					DIRECT_A1D_ELEM(counter, ires) += 1.;
+				}
+			}
+
+			// Calculate radial average of power spectrum
+			FOR_ALL_DIRECT_ELEMENTS_IN_ARRAY1D(power_spectrum)
+			{
+				if (DIRECT_A1D_ELEM(counter, i) < 1.)
+					DIRECT_A1D_ELEM(power_spectrum, i) = 0.;
+				else
+					DIRECT_A1D_ELEM(power_spectrum, i) /= DIRECT_A1D_ELEM(counter, i);
 			}
 		}
-
-		// Calculate radial average of power spectrum
-		FOR_ALL_DIRECT_ELEMENTS_IN_ARRAY1D(power_spectrum)
+		else
 		{
-			if (DIRECT_A1D_ELEM(counter, i) < 1.)
-				DIRECT_A1D_ELEM(power_spectrum, i) = 0.;
+			if (output_centered)
+			{
+				FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Faux)
+				{
+					int r2 = kp*kp + ip*ip + jp*jp;
+					// The Fourier Transforms are all "normalised" for 2D transforms of size = ori_size x ori_size
+					if (r2 <= max_r2)
+					{
+						// Set data array
+						A3D_ELEM(data, kp, ip, jp) = DIRECT_A3D_ELEM(Faux, k, i, j) * normfft;
+					}
+				}
+			}
 			else
-				DIRECT_A1D_ELEM(power_spectrum, i) /= DIRECT_A1D_ELEM(counter, i);
+			{
+				FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Faux)
+				{
+					int r2 = kp*kp + ip*ip + jp*jp;
+					// The Fourier Transforms are all "normalised" for 2D transforms of size = ori_size x ori_size
+					if (r2 <= max_r2)
+					{
+						int jj = j;
+						int ii = ip < 0 ? YSIZE(data) + ip : ip;
+						int kk = kp < 0 ? ZSIZE(data) + kp : kp;
+						// Set data array
+						DIRECT_A3D_ELEM(data, kk, ii, jj) = DIRECT_A3D_ELEM(Faux, k, i, j) * normfft;
+					}
+				}
+			}
 		}
 
 		transformer.cleanup();
@@ -182,35 +228,38 @@ namespace relion
 	{
 		// Correct real-space map by dividing it by the Fourier transform of the interpolator(s)
 		vol_in.setXmippOrigin();
-		FOR_ALL_ELEMENTS_IN_ARRAY3D(vol_in)
-		{
-			DOUBLE r = sqrt((DOUBLE)(k*k + i*i + j*j));
-			// if r==0: do nothing (i.e. divide by 1)
-			if (r > 0.)
-			{
-				DOUBLE rval = r / (ori_size * padding_factor);
-				DOUBLE sinc = sin(PI * rval) / (PI * rval);
-				//DOUBLE ftblob = blob_Fourier_val(rval, blob) / blob_Fourier_val(0., blob);
-				// Interpolation (goes with "interpolator") to go from arbitrary to fine grid
-				if (interpolator == NEAREST_NEIGHBOUR && r_min_nn == 0)
+#pragma omp parallel for
+		for (long int k = STARTINGZ(vol_in); k <= FINISHINGZ(vol_in); k++)
+			for (long int i = STARTINGY(vol_in); i <= FINISHINGY(vol_in); i++)
+				for (long int j = STARTINGX(vol_in); j <= FINISHINGX(vol_in); j++)
 				{
-					// NN interpolation is convolution with a rectangular pulse, which FT is a sinc function
-					A3D_ELEM(vol_in, k, i, j) /= sinc;
+					DOUBLE r = sqrt((DOUBLE)(k*k + i*i + j*j));
+					// if r==0: do nothing (i.e. divide by 1)
+					if (r > 0.)
+					{
+						DOUBLE rval = r / (ori_size * padding_factor);
+						DOUBLE sinc = sin(PI * rval) / (PI * rval);
+						//DOUBLE ftblob = blob_Fourier_val(rval, blob) / blob_Fourier_val(0., blob);
+						// Interpolation (goes with "interpolator") to go from arbitrary to fine grid
+						if (interpolator == NEAREST_NEIGHBOUR && r_min_nn == 0)
+						{
+							// NN interpolation is convolution with a rectangular pulse, which FT is a sinc function
+							A3D_ELEM(vol_in, k, i, j) /= sinc;
+						}
+						else if (interpolator == TRILINEAR || (interpolator == NEAREST_NEIGHBOUR && r_min_nn > 0))
+						{
+							// trilinear interpolation is convolution with a triangular pulse, which FT is a sinc^2 function
+							A3D_ELEM(vol_in, k, i, j) /= sinc * sinc;
+						}
+						else
+							REPORT_ERROR("BUG Projector::griddingCorrect: unrecognised interpolator scheme.");
+						//#define DEBUG_GRIDDING_CORRECT
+		#ifdef DEBUG_GRIDDING_CORRECT
+						if (k==0 && i==0 && j > 0)
+							std::cerr << " j= " << j << " sinc= " << sinc << std::endl;
+		#endif
+					}
 				}
-				else if (interpolator == TRILINEAR || (interpolator == NEAREST_NEIGHBOUR && r_min_nn > 0))
-				{
-					// trilinear interpolation is convolution with a triangular pulse, which FT is a sinc^2 function
-					A3D_ELEM(vol_in, k, i, j) /= sinc * sinc;
-				}
-				else
-					REPORT_ERROR("BUG Projector::griddingCorrect: unrecognised interpolator scheme.");
-				//#define DEBUG_GRIDDING_CORRECT
-#ifdef DEBUG_GRIDDING_CORRECT
-				if (k==0 && i==0 && j > 0)
-					std::cerr << " j= " << j << " sinc= " << sinc << std::endl;
-#endif
-			}
-		}
 	}
 
 	void Projector::project(MultidimArray<Complex > &f2d, Matrix2D<DOUBLE> &A, bool inv)

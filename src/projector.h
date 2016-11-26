@@ -193,7 +193,7 @@ namespace relion
 		* Depending on whether 2D or 3D Fourier Transforms will be extracted, the map is normalized internally in a different manner
 		*
 		*/
-		void computeFourierTransformMap(MultidimArray<DOUBLE> &vol_in, MultidimArray<DOUBLE> &power_spectrum, int current_size = -1, int nr_threads = 1, bool do_gridding = true);
+		void computeFourierTransformMap(MultidimArray<DOUBLE> &vol_in, MultidimArray<DOUBLE> &power_spectrum, int current_size = -1, int nr_threads = 1, bool do_gridding = true, bool do_statistics = true, bool output_centered = true);
 
 		/* Because we interpolate in Fourier space to make projections and/or reconstructions, we have to correct
 		 * the real-space maps by dividing them by the Fourier Transform of the interpolator
