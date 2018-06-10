@@ -54,7 +54,6 @@
 #include "src/matrix1d.h"
 #include "src/matrix2d.h"
 #include "src/complex.h"
-#include "cuda_runtime.h"
 
 
 namespace relion
@@ -177,6 +176,7 @@ namespace relion
 
 	#define NEXT_MULT_OF_4(v) (((v) + 3) / 4 * 4)
 	#define NEXT_MULT_OF_8(v) (((v) + 7) / 8 * 8)
+	#define NEXT_MULT_OF_16(v) (((v) + 15) / 16 * 16)
 
 	#define FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY_4(v) \
 		for (long int n=0; n < NZYXSIZE(v); n += 4)
@@ -681,11 +681,11 @@ namespace relion
 			}
 			else
 			{
-				//cudaMallocHost((void**)&data, NEXT_MULT_OF_8(nzyxdim) * sizeof(T));
-				data = (T*)_aligned_malloc(NEXT_MULT_OF_8(nzyxdim) * sizeof(T), 32);
+				//cudaMallocHost((void**)&data, NEXT_MULT_OF_16(nzyxdim) * sizeof(T));
+				data = (T*)_aligned_malloc(NEXT_MULT_OF_16(nzyxdim) * sizeof(T), 64);
 				if (data == NULL)
 					REPORT_ERROR("Could not allocate memory");
-				memset(data + NEXT_MULT_OF_8(nzyxdim) - 7, 0, 7 * sizeof(T));
+				memset(data + NEXT_MULT_OF_16(nzyxdim) - 15, 0, 15 * sizeof(T));
 				if (data == NULL)
 					REPORT_ERROR( "Allocate: No space left");
 			}
@@ -714,11 +714,11 @@ namespace relion
 			}
 			else
 			{
-				//cudaMallocHost((void**)&data, NEXT_MULT_OF_8(nzyxdim) * sizeof(T));
-				data = (T*)_aligned_malloc(NEXT_MULT_OF_8(nzyxdim) * sizeof(T), 32);
+				//cudaMallocHost((void**)&data, NEXT_MULT_OF_16(nzyxdim) * sizeof(T));
+				data = (T*)_aligned_malloc(NEXT_MULT_OF_16(nzyxdim) * sizeof(T), 64);
 				if (data == NULL)
 					REPORT_ERROR("Could not allocate memory");
-				memset(data + NEXT_MULT_OF_8(nzyxdim) - 7, 0, 7 * sizeof(T));
+				memset(data + NEXT_MULT_OF_16(nzyxdim) - 15, 0, 15 * sizeof(T));
 				if (data == NULL)
 					REPORT_ERROR( "Allocate: No space left");
 			}
@@ -902,10 +902,10 @@ namespace relion
 				}
 				else
 				{
-					new_data = (T*)_aligned_malloc(NEXT_MULT_OF_8(NZYXdim) * sizeof(T), 32);
+					new_data = (T*)_aligned_malloc(NEXT_MULT_OF_16(NZYXdim) * sizeof(T), 64);
 					if (new_data == NULL)
 						REPORT_ERROR("Could not allocate memory");
-					memset(new_data + NEXT_MULT_OF_8(NZYXdim) - 7, 0, 7 * sizeof(T));
+					memset(new_data + NEXT_MULT_OF_16(NZYXdim) - 15, 0, 15 * sizeof(T));
 				}
 			}
 			catch (std::bad_alloc &)

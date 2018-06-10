@@ -86,7 +86,7 @@ namespace relion
 		MultidimArray<DOUBLE> Mpad;
 		MultidimArray<Complex > Faux;
 		FourierTransformer transformer;
-		transformer.setThreadsNumber(nr_threads);
+		//transformer.setThreadsNumber(nr_threads);
 		// DEBUGGING: multi-threaded FFTWs are giving me a headache?
 		// For a long while: switch them off!
 		//transformer.setThreadsNumber(nr_threads);
@@ -116,7 +116,7 @@ namespace relion
 			REPORT_ERROR("Projector::computeFourierTransformMap%%ERROR: Dimension of the data array should be 2 or 3");
 		}
 
-		normfft = 1;
+		//normfft = 1;
 
 		// First do a gridding pre-correction on the real-space map:
 		// Divide by the inverse Fourier transform of the interpolator in Fourier-space
