@@ -681,15 +681,20 @@ namespace relion
 			}
 			else
 			{
-				//cudaMallocHost((void**)&data, NEXT_MULT_OF_16(nzyxdim) * sizeof(T));
-				data = (T*)_aligned_malloc(NEXT_MULT_OF_16(nzyxdim) * sizeof(T), 64);
+				////cudaMallocHost((void**)&data, NEXT_MULT_OF_16(nzyxdim) * sizeof(T));
+				//data = (T*)_aligned_malloc(NEXT_MULT_OF_16(nzyxdim) * sizeof(T), 64);
+				//if (data == NULL)
+				//	REPORT_ERROR("Could not allocate memory");
+				//memset(data + NEXT_MULT_OF_16(nzyxdim) - 15, 0, 15 * sizeof(T));
+				//if (data == NULL)
+				//	REPORT_ERROR( "Allocate: No space left");
+
+				data = new T[nzyxdim];
 				if (data == NULL)
-					REPORT_ERROR("Could not allocate memory");
-				memset(data + NEXT_MULT_OF_16(nzyxdim) - 15, 0, 15 * sizeof(T));
-				if (data == NULL)
-					REPORT_ERROR( "Allocate: No space left");
+					REPORT_ERROR("Allocate: No space left");
 			}
 			nzyxdimAlloc = nzyxdim;
+
 		}
 
 		/** Core allocate without dimensions.
@@ -714,13 +719,17 @@ namespace relion
 			}
 			else
 			{
-				//cudaMallocHost((void**)&data, NEXT_MULT_OF_16(nzyxdim) * sizeof(T));
-				data = (T*)_aligned_malloc(NEXT_MULT_OF_16(nzyxdim) * sizeof(T), 64);
+				////cudaMallocHost((void**)&data, NEXT_MULT_OF_16(nzyxdim) * sizeof(T));
+				//data = (T*)_aligned_malloc(NEXT_MULT_OF_16(nzyxdim) * sizeof(T), 64);
+				//if (data == NULL)
+				//	REPORT_ERROR("Could not allocate memory");
+				//memset(data + NEXT_MULT_OF_16(nzyxdim) - 15, 0, 15 * sizeof(T));
+				//if (data == NULL)
+				//	REPORT_ERROR( "Allocate: No space left");
+
+				data = new T[nzyxdim];
 				if (data == NULL)
-					REPORT_ERROR("Could not allocate memory");
-				memset(data + NEXT_MULT_OF_16(nzyxdim) - 15, 0, 15 * sizeof(T));
-				if (data == NULL)
-					REPORT_ERROR( "Allocate: No space left");
+					REPORT_ERROR("Allocate: No space left");
 			}
 			nzyxdimAlloc = nzyxdim;
 		}
@@ -747,8 +756,9 @@ namespace relion
 					REPORT_ERROR("Not on Windows");
 				}
 				else
-					_aligned_free(data);
-					//cudaFreeHost(data);
+					delete[] data;
+					//_aligned_free(data);
+					////cudaFreeHost(data);
 			}
 			data=NULL;
 			nzyxdimAlloc = 0;
@@ -902,10 +912,12 @@ namespace relion
 				}
 				else
 				{
-					new_data = (T*)_aligned_malloc(NEXT_MULT_OF_16(NZYXdim) * sizeof(T), 64);
+					/*new_data = (T*)_aligned_malloc(NEXT_MULT_OF_16(NZYXdim) * sizeof(T), 64);
 					if (new_data == NULL)
 						REPORT_ERROR("Could not allocate memory");
-					memset(new_data + NEXT_MULT_OF_16(NZYXdim) - 15, 0, 15 * sizeof(T));
+					memset(new_data + NEXT_MULT_OF_16(NZYXdim) - 15, 0, 15 * sizeof(T));*/
+
+					new_data = new T[NZYXdim];
 				}
 			}
 			catch (std::bad_alloc &)
@@ -918,7 +930,7 @@ namespace relion
 			{
 				if (Zdim > 1)
 				{
-#pragma omp parallel for
+//#pragma omp parallel for
 					for (long int k = 0; k < Zdim; k++)
 						for (long int i = 0; i < Ydim; i++)
 							for (long int j = 0; j < Xdim; j++)
@@ -938,7 +950,7 @@ namespace relion
 				else if (Ydim > 1)
 				{
 					for (long int k = 0; k < Zdim; k++)
-#pragma omp parallel for
+//#pragma omp parallel for
 						for (long int i = 0; i < Ydim; i++)
 							for (long int j = 0; j < Xdim; j++)
 							{
@@ -958,7 +970,7 @@ namespace relion
 				{
 					for (long int k = 0; k < Zdim; k++)
 						for (long int i = 0; i < Ydim; i++)
-#pragma omp parallel for
+//#pragma omp parallel for
 							for (long int j = 0; j < Xdim; j++)
 							{
 								T val;

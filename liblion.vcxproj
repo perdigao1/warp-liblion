@@ -29,6 +29,7 @@
     <ClCompile Include="src\memory.cpp" />
     <ClCompile Include="src\metadata_container.cpp" />
     <ClCompile Include="src\metadata_label.cpp" />
+    <ClCompile Include="src\metadata_table.cpp" />
     <ClCompile Include="src\multidim_array.cpp" />
     <ClCompile Include="src\numerical_recipes.cpp" />
     <ClCompile Include="src\projector.cpp" />
@@ -66,10 +67,12 @@
     <ClInclude Include="src\memory.h" />
     <ClInclude Include="src\metadata_container.h" />
     <ClInclude Include="src\metadata_label.h" />
+    <ClInclude Include="src\metadata_table.h" />
     <ClInclude Include="src\multidim_array.h" />
     <ClInclude Include="src\avx_helper.h" />
     <ClInclude Include="src\numerical_recipes.h" />
     <ClInclude Include="src\projector.h" />
+    <ClInclude Include="src\rwMRC.h" />
     <ClInclude Include="src\strings.h" />
     <ClInclude Include="src\symmetries.h" />
     <ClInclude Include="src\tabfuncs.h" />
@@ -78,20 +81,20 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2D648530-232E-421B-A10A-082C0F95583A}</ProjectGuid>
     <RootNamespace>liblion</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
     <ProjectName>liblion</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -107,8 +110,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)fftw;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir);$(CUDA_PATH)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)fftw;$(CUDA_PATH)\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(SolutionDir);$(IncludePath)</IncludePath>
@@ -129,7 +132,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libfftw3f-3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -146,7 +149,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libfftw3f-3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

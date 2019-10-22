@@ -282,25 +282,25 @@ namespace relion
 		/*
 		 * Go from the Projector-centered fourier transform back to FFTW-uncentered one
 		 */
-		template <typename T>
-		void decenter(MultidimArray<T> &Min, MultidimArray<T> &Mout, int my_rmax2)
-		{
+		//template <typename T>
+		//void decenter(MultidimArray<T> &Min, MultidimArray<T> &Mout, int my_rmax2)
+		//{
 
-			// Mout should already have the right size
-			// Initialize to zero
-			Mout.initZeros();
-			FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Mout)
-			{
-				if (kp*kp + ip*ip + jp*jp <= my_rmax2)
-					DIRECT_A3D_ELEM(Mout, k, i, j) = A3D_ELEM(Min, kp, ip, jp);
-			}
-		}
+		//	// Mout should already have the right size
+		//	// Initialize to zero
+		//	Mout.initZeros();
+		//	FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Mout)
+		//	{
+		//		if (kp*kp + ip*ip + jp*jp <= my_rmax2)
+		//			DIRECT_A3D_ELEM(Mout, k, i, j) = A3D_ELEM(Min, kp, ip, jp);
+		//	}
+		//}
 
 
-#ifdef FLOAT_PRECISION
+//#ifdef FLOAT_PRECISION
 		// Fnewweight needs decentering, but has to be in double-precision for correct calculations!
-		template <typename T>
-		void decenter(MultidimArray<T> &Min, MultidimArray<double> &Mout, int my_rmax2)
+		
+		void decenter_fd(MultidimArray<float> &Min, MultidimArray<double> &Mout, int my_rmax2)
 		{
 
 			// Mout should already have the right size
@@ -312,7 +312,33 @@ namespace relion
 					DIRECT_A3D_ELEM(Mout, k, i, j) = (double)A3D_ELEM(Min, kp, ip, jp);
 			}
 		}
-#endif
+
+		void decenter_ff(MultidimArray<float> &Min, MultidimArray<float> &Mout, int my_rmax2)
+		{
+
+			// Mout should already have the right size
+			// Initialize to zero
+			Mout.initZeros();
+			FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Mout)
+			{
+				if (kp*kp + ip * ip + jp * jp <= my_rmax2)
+					DIRECT_A3D_ELEM(Mout, k, i, j) = A3D_ELEM(Min, kp, ip, jp);
+			}
+		}
+
+		void decenter_cc(MultidimArray<Complex> &Min, MultidimArray<Complex> &Mout, int my_rmax2)
+		{
+
+			// Mout should already have the right size
+			// Initialize to zero
+			Mout.initZeros();
+			FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Mout)
+			{
+				if (kp*kp + ip * ip + jp * jp <= my_rmax2)
+					DIRECT_A3D_ELEM(Mout, k, i, j) = A3D_ELEM(Min, kp, ip, jp);
+			}
+		}
+//#endif
 
 	};
 }

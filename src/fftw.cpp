@@ -106,9 +106,9 @@ namespace relion
 		// Then clean up all the junk fftw keeps lying around
 		// SOMEHOW THE FOLLOWING IS NOT ALLOWED WHEN USING MULTPLE TRANSFORMER OBJECTS....
 	#ifdef FLOAT_PRECISION
-		if (threadsSetOn)
+		/*if (threadsSetOn)
     		fftwf_cleanup_threads();
-		else
+		else*/
     		fftwf_cleanup();
 	#else
 		if (threadsSetOn)
@@ -147,23 +147,23 @@ namespace relion
 
 	void FourierTransformer::setThreadsNumber(int tNumber)
 	{
-#pragma omp critical(Plan)
-		{
-			if (tNumber != 1)
-			{
-				threadsSetOn = true;
-				nthreads = tNumber;
-#ifdef FLOAT_PRECISION
-				if(fftwf_init_threads()==0)
-					REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
-				fftwf_plan_with_nthreads(nthreads);
-#else
-				if (fftw_init_threads() == 0)
-					REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
-				fftw_plan_with_nthreads(nthreads);
-#endif
-			}
-		}
+//#pragma omp critical(Plan)
+//		{
+//			if (tNumber != 1)
+//			{
+//				threadsSetOn = true;
+//				nthreads = tNumber;
+//#ifdef FLOAT_PRECISION
+//				if(fftwf_init_threads()==0)
+//					REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
+//				fftwf_plan_with_nthreads(nthreads);
+//#else
+//				if (fftw_init_threads() == 0)
+//					REPORT_ERROR("FFTW cannot init threads (setThreadsNumber)");
+//				fftw_plan_with_nthreads(nthreads);
+//#endif
+//			}
+//		}
 	}
 
 	// Initialization ----------------------------------------------------------

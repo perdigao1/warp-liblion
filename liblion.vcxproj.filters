@@ -93,6 +93,9 @@
     <ClCompile Include="src\Healpix_2.15a\healpix_base.cc">
       <Filter>Healpix</Filter>
     </ClCompile>
+    <ClCompile Include="src\metadata_table.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\backprojector.h">
@@ -201,6 +204,12 @@
       <Filter>Healpix</Filter>
     </ClInclude>
     <ClInclude Include="liblion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\metadata_table.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rwMRC.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

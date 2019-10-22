@@ -47,6 +47,7 @@
 #define __XmippFFTW_H
 
 #include <fftw/fftw3.h>
+//#include <cufftw.h>
 #include "src/multidim_array.h"
 #include "src/funcs.h"
 #include "src/tabfuncs.h"
@@ -499,7 +500,7 @@ namespace relion
 			if (!forward)
 				shift = -shift;
 
-#pragma omp parallel for
+//#pragma omp parallel for
 			for (int k = 0; k < ZSIZE(v); k++)
 			{
 				MultidimArray< T > aux;
@@ -533,7 +534,7 @@ namespace relion
 			if (!forward)
 				shift = -shift;
 
-#pragma omp parallel for
+//#pragma omp parallel for
 			for (int k = 0; k < ZSIZE(v); k++)
 			{
 				MultidimArray< T > aux;
@@ -567,7 +568,7 @@ namespace relion
 			if (!forward)
 				shift = -shift;
 
-#pragma omp parallel for
+//#pragma omp parallel for
 			for (int i = 0; i < YSIZE(v); i++)
 			{
 				MultidimArray< T > aux;

@@ -17,14 +17,15 @@
  * source code. Additional authorship citations may be added, but existing
  * author citations must be preserved.
  ***************************************************************************/
-/*
- * backprojector.cpp
- *
- *  Created on: 24 Aug 2010
- *      Author: scheres
- */
+ /*
+  * backprojector.cpp
+  *
+  *  Created on: 24 Aug 2010
+  *      Author: scheres
+  */
 
 #include "src/backprojector.h"
+//#include "temp/IO.cuh"
 
 
 namespace relion
@@ -46,8 +47,8 @@ namespace relion
 	}
 
 	void BackProjector::backproject(const MultidimArray<Complex > &f2d,
-									const Matrix2D<DOUBLE> &A, bool inv,
-									const MultidimArray<DOUBLE> *Mweight)
+		const Matrix2D<DOUBLE> &A, bool inv,
+		const MultidimArray<DOUBLE> *Mweight)
 	{
 		DOUBLE fx, fy, fz, mfx, mfy, mfz, xp, yp, zp;
 		int first_x, x0, x1, y0, y1, z0, z1, y, y2, r2;
@@ -62,29 +63,29 @@ namespace relion
 
 		// Use the inverse matrix
 		if (inv)
-    		Ainv = A;
+			Ainv = A;
 		else
-    		Ainv = A.transpose();
+			Ainv = A.transpose();
 
 		// Go from the 2D slice coordinates to the 3D coordinates
 		Ainv *= (DOUBLE)padding_factor;  // take scaling into account directly
 		int max_r2 = r_max * r_max;
 		int min_r2_nn = r_min_nn * r_min_nn;
 
-	//#define DEBUG_BACKP
-	#ifdef DEBUG_BACKP
-		std::cerr << " XSIZE(f2d)= "<< XSIZE(f2d) << std::endl;
-		std::cerr << " YSIZE(f2d)= "<< YSIZE(f2d) << std::endl;
-		std::cerr << " XSIZE(data)= "<< XSIZE(data) << std::endl;
-		std::cerr << " YSIZE(data)= "<< YSIZE(data) << std::endl;
-		std::cerr << " STARTINGX(data)= "<< STARTINGX(data) << std::endl;
-		std::cerr << " STARTINGY(data)= "<< STARTINGY(data) << std::endl;
-		std::cerr << " STARTINGZ(data)= "<< STARTINGZ(data) << std::endl;
-		std::cerr << " max_r= "<< r_max << std::endl;
+		//#define DEBUG_BACKP
+#ifdef DEBUG_BACKP
+		std::cerr << " XSIZE(f2d)= " << XSIZE(f2d) << std::endl;
+		std::cerr << " YSIZE(f2d)= " << YSIZE(f2d) << std::endl;
+		std::cerr << " XSIZE(data)= " << XSIZE(data) << std::endl;
+		std::cerr << " YSIZE(data)= " << YSIZE(data) << std::endl;
+		std::cerr << " STARTINGX(data)= " << STARTINGX(data) << std::endl;
+		std::cerr << " STARTINGY(data)= " << STARTINGY(data) << std::endl;
+		std::cerr << " STARTINGZ(data)= " << STARTINGZ(data) << std::endl;
+		std::cerr << " max_r= " << r_max << std::endl;
 		std::cerr << " Ainv= " << Ainv << std::endl;
-	#endif
+#endif
 
-		for (int i=0; i < YSIZE(f2d); i++)
+		for (int i = 0; i < YSIZE(f2d); i++)
 		{
 			// Dont search beyond square with side max_r
 			if (i <= r_max)
@@ -102,9 +103,9 @@ namespace relion
 				continue;
 
 			y2 = y * y;
-			for (int x=first_x; x <= r_max; x++)
+			for (int x = first_x; x <= r_max; x++)
 			{
-	    		// Only include points with radius < max_r (exclude points outside circle in square)
+				// Only include points with radius < max_r (exclude points outside circle in square)
 				r2 = x * x + y2;
 				if (r2 > max_r2)
 					continue;
@@ -121,9 +122,9 @@ namespace relion
 				{
 
 					// Get logical coordinates in the 3D map
-					xp = Ainv(0,0) * x + Ainv(0,1) * y;
-					yp = Ainv(1,0) * x + Ainv(1,1) * y;
-					zp = Ainv(2,0) * x + Ainv(2,1) * y;
+					xp = Ainv(0, 0) * x + Ainv(0, 1) * y;
+					yp = Ainv(1, 0) * x + Ainv(1, 1) * y;
+					zp = Ainv(2, 0) * x + Ainv(2, 1) * y;
 
 					if (interpolator == TRILINEAR || r2 < min_r2_nn)
 					{
@@ -151,7 +152,7 @@ namespace relion
 
 						y0 = FLOOR(yp);
 						fy = yp - y0;
-						y0 -=  STARTINGY(data);
+						y0 -= STARTINGY(data);
 						y1 = y0 + 1;
 
 						z0 = FLOOR(zp);
@@ -165,12 +166,12 @@ namespace relion
 
 						dd000 = mfz * mfy * mfx;
 						dd001 = mfz * mfy *  fx;
-						dd010 = mfz *  fy * mfx;
-						dd011 = mfz *  fy *  fx;
-						dd100 =  fz * mfy * mfx;
-						dd101 =  fz * mfy *  fx;
-						dd110 =  fz *  fy * mfx;
-						dd111 =  fz *  fy *  fx;
+						dd010 = mfz * fy * mfx;
+						dd011 = mfz * fy *  fx;
+						dd100 = fz * mfy * mfx;
+						dd101 = fz * mfy *  fx;
+						dd110 = fz * fy * mfx;
+						dd111 = fz * fy *  fx;
 
 						if (is_neg_x)
 							my_val = conj(my_val);
@@ -195,7 +196,7 @@ namespace relion
 						DIRECT_A3D_ELEM(weight, z1, y1, x1) += dd111 * my_weight;
 
 					} // endif TRILINEAR
-					else if (interpolator == NEAREST_NEIGHBOUR )
+					else if (interpolator == NEAREST_NEIGHBOUR)
 					{
 
 						x0 = ROUND(xp);
@@ -224,8 +225,8 @@ namespace relion
 	}
 
 	void BackProjector::backrotate2D(const MultidimArray<Complex > &f2d,
-									 const Matrix2D<DOUBLE> &A, bool inv,
-									 const MultidimArray<DOUBLE> *Mweight)
+		const Matrix2D<DOUBLE> &A, bool inv,
+		const MultidimArray<DOUBLE> *Mweight)
 	{
 		DOUBLE fx, fy, mfx, mfy, xp, yp;
 		int first_x, x0, x1, y0, y1, y, y2, r2;
@@ -240,29 +241,29 @@ namespace relion
 
 		// Use the inverse matrix
 		if (inv)
-    		Ainv = A;
+			Ainv = A;
 		else
-    		Ainv = A.transpose();
+			Ainv = A.transpose();
 
 		// Go from the 2D slice coordinates to the data-array coordinates
 		Ainv *= (DOUBLE)padding_factor;  // take scaling into account directly
 		int max_r2 = r_max * r_max;
 		int min_r2_nn = r_min_nn * r_min_nn;
 
-	//#define DEBUG_BACKROTATE
-	#ifdef DEBUG_BACKROTATE
-		std::cerr << " XSIZE(f2d)= "<< XSIZE(f2d) << std::endl;
-		std::cerr << " YSIZE(f2d)= "<< YSIZE(f2d) << std::endl;
-		std::cerr << " XSIZE(data)= "<< XSIZE(data) << std::endl;
-		std::cerr << " YSIZE(data)= "<< YSIZE(data) << std::endl;
-		std::cerr << " STARTINGX(data)= "<< STARTINGX(data) << std::endl;
-		std::cerr << " STARTINGY(data)= "<< STARTINGY(data) << std::endl;
-		std::cerr << " STARTINGZ(data)= "<< STARTINGZ(data) << std::endl;
-		std::cerr << " max_r= "<< r_max << std::endl;
+		//#define DEBUG_BACKROTATE
+#ifdef DEBUG_BACKROTATE
+		std::cerr << " XSIZE(f2d)= " << XSIZE(f2d) << std::endl;
+		std::cerr << " YSIZE(f2d)= " << YSIZE(f2d) << std::endl;
+		std::cerr << " XSIZE(data)= " << XSIZE(data) << std::endl;
+		std::cerr << " YSIZE(data)= " << YSIZE(data) << std::endl;
+		std::cerr << " STARTINGX(data)= " << STARTINGX(data) << std::endl;
+		std::cerr << " STARTINGY(data)= " << STARTINGY(data) << std::endl;
+		std::cerr << " STARTINGZ(data)= " << STARTINGZ(data) << std::endl;
+		std::cerr << " max_r= " << r_max << std::endl;
 		std::cerr << " Ainv= " << Ainv << std::endl;
-	#endif
+#endif
 
-		for (int i=0; i < YSIZE(f2d); i++)
+		for (int i = 0; i < YSIZE(f2d); i++)
 		{
 			// Don't search beyond square with side max_r
 			if (i <= r_max)
@@ -280,9 +281,9 @@ namespace relion
 				continue;
 
 			y2 = y * y;
-			for (int x=first_x; x <= r_max; x++)
+			for (int x = first_x; x <= r_max; x++)
 			{
-	    		// Only include points with radius < max_r (exclude points outside circle in square)
+				// Only include points with radius < max_r (exclude points outside circle in square)
 				r2 = x * x + y2;
 				if (r2 > max_r2)
 					continue;
@@ -298,8 +299,8 @@ namespace relion
 				if (my_weight > 0.)
 				{
 					// Get logical coordinates in the 3D map
-					xp = Ainv(0,0) * x + Ainv(0,1) * y;
-					yp = Ainv(1,0) * x + Ainv(1,1) * y;
+					xp = Ainv(0, 0) * x + Ainv(0, 1) * y;
+					yp = Ainv(1, 0) * x + Ainv(1, 1) * y;
 
 					if (interpolator == TRILINEAR || r2 < min_r2_nn)
 					{
@@ -325,16 +326,16 @@ namespace relion
 
 						y0 = FLOOR(yp);
 						fy = yp - y0;
-						y0 -=  STARTINGY(data);
+						y0 -= STARTINGY(data);
 						y1 = y0 + 1;
 
 						mfx = 1. - fx;
 						mfy = 1. - fy;
 
 						dd00 = mfy * mfx;
-						dd01 = mfy *  fx;
-						dd10 =  fy * mfx;
-						dd11 =  fy *  fx;
+						dd01 = mfy * fx;
+						dd10 = fy * mfx;
+						dd11 = fy * fx;
 
 						if (is_neg_x)
 							my_val = conj(my_val);
@@ -352,7 +353,7 @@ namespace relion
 						DIRECT_A2D_ELEM(weight, y1, x1) += dd11 * my_weight;
 
 					} // endif TRILINEAR
-					else if (interpolator == NEAREST_NEIGHBOUR )
+					else if (interpolator == NEAREST_NEIGHBOUR)
 					{
 						x0 = ROUND(xp);
 						y0 = ROUND(yp);
@@ -377,8 +378,8 @@ namespace relion
 	}
 
 	void BackProjector::backrotate3D(const MultidimArray<Complex > &f3d,
-									 const Matrix2D<DOUBLE> &A, bool inv,
-									 const MultidimArray<DOUBLE> *Mweight)
+		const Matrix2D<DOUBLE> &A, bool inv,
+		const MultidimArray<DOUBLE> *Mweight)
 	{
 		DOUBLE fx, fy, fz, mfx, mfy, mfz, xp, yp, zp;
 		int first_x, x0, x1, y0, y1, z0, z1, y, y2, z, z2, r2;
@@ -393,29 +394,29 @@ namespace relion
 
 		// Use the inverse matrix
 		if (inv)
-    		Ainv = A;
+			Ainv = A;
 		else
-    		Ainv = A.transpose();
+			Ainv = A.transpose();
 
 		// Go from the 2D slice coordinates to the data-array coordinates
 		Ainv *= (DOUBLE)padding_factor;  // take scaling into account directly
 		int max_r2 = r_max * r_max;
 		int min_r2_nn = r_min_nn * r_min_nn;
 
-	//#define DEBUG_BACKROTATE
-	#ifdef DEBUG_BACKROTATE
-		std::cerr << " XSIZE(f3d)= "<< XSIZE(f3d) << std::endl;
-		std::cerr << " YSIZE(f3d)= "<< YSIZE(f3d) << std::endl;
-		std::cerr << " XSIZE(data)= "<< XSIZE(data) << std::endl;
-		std::cerr << " YSIZE(data)= "<< YSIZE(data) << std::endl;
-		std::cerr << " STARTINGX(data)= "<< STARTINGX(data) << std::endl;
-		std::cerr << " STARTINGY(data)= "<< STARTINGY(data) << std::endl;
-		std::cerr << " STARTINGZ(data)= "<< STARTINGZ(data) << std::endl;
-		std::cerr << " max_r= "<< r_max << std::endl;
+		//#define DEBUG_BACKROTATE
+#ifdef DEBUG_BACKROTATE
+		std::cerr << " XSIZE(f3d)= " << XSIZE(f3d) << std::endl;
+		std::cerr << " YSIZE(f3d)= " << YSIZE(f3d) << std::endl;
+		std::cerr << " XSIZE(data)= " << XSIZE(data) << std::endl;
+		std::cerr << " YSIZE(data)= " << YSIZE(data) << std::endl;
+		std::cerr << " STARTINGX(data)= " << STARTINGX(data) << std::endl;
+		std::cerr << " STARTINGY(data)= " << STARTINGY(data) << std::endl;
+		std::cerr << " STARTINGZ(data)= " << STARTINGZ(data) << std::endl;
+		std::cerr << " max_r= " << r_max << std::endl;
 		std::cerr << " Ainv= " << Ainv << std::endl;
-	#endif
+#endif
 
-		for (int k=0; k < ZSIZE(f3d); k++)
+		for (int k = 0; k < ZSIZE(f3d); k++)
 		{
 			// Don't search beyond square with side max_r
 			if (k <= r_max)
@@ -434,7 +435,7 @@ namespace relion
 				continue;
 
 			z2 = z * z;
-			for (int i=0; i < YSIZE(f3d); i++)
+			for (int i = 0; i < YSIZE(f3d); i++)
 			{
 				// Don't search beyond square with side max_r
 				if (i <= r_max)
@@ -467,9 +468,9 @@ namespace relion
 					if (my_weight > 0.)
 					{
 						// Get logical coordinates in the 3D map
-						xp = Ainv(0,0) * x + Ainv(0,1) * y + Ainv(0,2) * z;
-						yp = Ainv(1,0) * x + Ainv(1,1) * y + Ainv(1,2) * z;
-						zp = Ainv(2,0) * x + Ainv(2,1) * y + Ainv(2,2) * z;
+						xp = Ainv(0, 0) * x + Ainv(0, 1) * y + Ainv(0, 2) * z;
+						yp = Ainv(1, 0) * x + Ainv(1, 1) * y + Ainv(1, 2) * z;
+						zp = Ainv(2, 0) * x + Ainv(2, 1) * y + Ainv(2, 2) * z;
 
 						if (interpolator == TRILINEAR || r2 < min_r2_nn)
 						{
@@ -496,12 +497,12 @@ namespace relion
 
 							y0 = FLOOR(yp);
 							fy = yp - y0;
-							y0 -=  STARTINGY(data);
+							y0 -= STARTINGY(data);
 							y1 = y0 + 1;
 
 							z0 = FLOOR(zp);
 							fz = zp - z0;
-							z0 -=  STARTINGZ(data);
+							z0 -= STARTINGZ(data);
 							z1 = z0 + 1;
 
 							mfx = 1. - fx;
@@ -510,12 +511,12 @@ namespace relion
 
 							dd000 = mfz * mfy * mfx;
 							dd001 = mfz * mfy *  fx;
-							dd010 = mfz *  fy * mfx;
-							dd011 = mfz *  fy *  fx;
-							dd100 =  fz * mfy * mfx;
-							dd101 =  fz * mfy *  fx;
-							dd110 =  fz *  fy * mfx;
-							dd111 =  fz *  fy *  fx;
+							dd010 = mfz * fy * mfx;
+							dd011 = mfz * fy *  fx;
+							dd100 = fz * mfy * mfx;
+							dd101 = fz * mfy *  fx;
+							dd110 = fz * fy * mfx;
+							dd111 = fz * fy *  fx;
 
 							if (is_neg_x)
 								my_val = conj(my_val);
@@ -541,7 +542,7 @@ namespace relion
 
 
 						} // endif TRILINEAR
-						else if (interpolator == NEAREST_NEIGHBOUR )
+						else if (interpolator == NEAREST_NEIGHBOUR)
 						{
 							x0 = ROUND(xp);
 							y0 = ROUND(yp);
@@ -570,7 +571,7 @@ namespace relion
 	}
 
 	void BackProjector::getLowResDataAndWeight(MultidimArray<Complex > &lowres_data, MultidimArray<DOUBLE> &lowres_weight,
-			int lowres_r_max)
+		int lowres_r_max)
 	{
 
 		int lowres_r2_max = padding_factor * padding_factor * lowres_r_max * lowres_r_max;
@@ -588,26 +589,26 @@ namespace relion
 		lowres_data.clear();
 		lowres_data.resize(lowres_pad_size, lowres_pad_size, lowres_pad_size / 2 + 1);
 		lowres_data.setXmippOrigin();
-		lowres_data.xinit=0;
+		lowres_data.xinit = 0;
 		lowres_weight.clear();
 		lowres_weight.resize(lowres_pad_size, lowres_pad_size, lowres_pad_size / 2 + 1);
 		lowres_weight.setXmippOrigin();
-		lowres_weight.xinit=0;
+		lowres_weight.xinit = 0;
 
 		// fill lowres arrays with relevant values
 		FOR_ALL_ELEMENTS_IN_ARRAY3D(lowres_data)
 		{
-			if (k*k + i*i + j*j <= lowres_r2_max)
+			if (k*k + i * i + j * j <= lowres_r2_max)
 			{
-				A3D_ELEM(lowres_data, k, i, j) = A3D_ELEM(data, k , i, j);
-				A3D_ELEM(lowres_weight, k, i, j) = A3D_ELEM(weight, k , i, j);
+				A3D_ELEM(lowres_data, k, i, j) = A3D_ELEM(data, k, i, j);
+				A3D_ELEM(lowres_weight, k, i, j) = A3D_ELEM(weight, k, i, j);
 			}
 		}
 
 	}
 
 	void BackProjector::setLowResDataAndWeight(MultidimArray<Complex > &lowres_data, MultidimArray<DOUBLE> &lowres_weight,
-			int lowres_r_max)
+		int lowres_r_max)
 	{
 
 		int lowres_r2_max = padding_factor * padding_factor * lowres_r_max * lowres_r_max;
@@ -629,17 +630,17 @@ namespace relion
 
 		// Re-set origin to the expected place
 		lowres_data.setXmippOrigin();
-		lowres_data.xinit=0;
+		lowres_data.xinit = 0;
 		lowres_weight.setXmippOrigin();
-		lowres_weight.xinit=0;
+		lowres_weight.xinit = 0;
 
 		// Overwrite data and weight with the lowres arrays
 		FOR_ALL_ELEMENTS_IN_ARRAY3D(lowres_data)
 		{
-			if (k*k + i*i + j*j <= lowres_r2_max)
+			if (k*k + i * i + j * j <= lowres_r2_max)
 			{
-				A3D_ELEM(data, k, i, j) = A3D_ELEM(lowres_data, k , i, j);
-				A3D_ELEM(weight, k, i, j) = A3D_ELEM(lowres_weight, k , i, j);
+				A3D_ELEM(data, k, i, j) = A3D_ELEM(lowres_data, k, i, j);
+				A3D_ELEM(weight, k, i, j) = A3D_ELEM(lowres_weight, k, i, j);
 			}
 		}
 
@@ -657,17 +658,17 @@ namespace relion
 		switch (ref_dim)
 		{
 		case 2:
-		   avg.initZeros(down_size, down_size / 2 + 1);
-		   break;
+			avg.initZeros(down_size, down_size / 2 + 1);
+			break;
 		case 3:
-		   avg.initZeros(down_size, down_size, down_size / 2 + 1);
-		   break;
+			avg.initZeros(down_size, down_size, down_size / 2 + 1);
+			break;
 		default:
-		   REPORT_ERROR("BackProjector::getDownsampledAverage%%ERROR: Dimension of the data array should be 2 or 3");
+			REPORT_ERROR("BackProjector::getDownsampledAverage%%ERROR: Dimension of the data array should be 2 or 3");
 		}
 		// Set origin in the y.z-center, but on the left side for x.
 		avg.setXmippOrigin();
-		avg.xinit=0;
+		avg.xinit = 0;
 		// Resize down_weight the same as down_data
 		down_weight.initZeros(avg);
 
@@ -675,23 +676,23 @@ namespace relion
 		int kp, ip, jp;
 		FOR_ALL_ELEMENTS_IN_ARRAY3D(data)
 		{
-			kp = ROUND((DOUBLE)k/padding_factor);
-			ip = ROUND((DOUBLE)i/padding_factor);
-			jp = ROUND((DOUBLE)j/padding_factor);
+			kp = ROUND((DOUBLE)k / padding_factor);
+			ip = ROUND((DOUBLE)i / padding_factor);
+			jp = ROUND((DOUBLE)j / padding_factor);
 
-	// TMP
-	//#define CHECK_SIZE
-	#ifdef CHECK_SIZE
+			// TMP
+			//#define CHECK_SIZE
+#ifdef CHECK_SIZE
 			if (kp > FINISHINGZ(avg) || ip > FINISHINGY(avg) || jp > FINISHINGX(avg) ||
-					kp < STARTINGZ(avg) || ip < STARTINGY(avg) || jp < STARTINGX(avg))
+				kp < STARTINGZ(avg) || ip < STARTINGY(avg) || jp < STARTINGX(avg))
 			{
 				std::cerr << " kp= " << kp << " ip= " << ip << " jp= " << jp << std::endl;
 				avg.printShape();
 				REPORT_ERROR("BackProjector::getDownsampledAverage: indices out of range");
 			}
-	#endif
-			A3D_ELEM(avg, kp, ip, jp) += A3D_ELEM(data, k , i, j);
-			A3D_ELEM(down_weight, kp, ip, jp) += A3D_ELEM(weight, k , i, j);
+#endif
+			A3D_ELEM(avg, kp, ip, jp) += A3D_ELEM(data, k, i, j);
+			A3D_ELEM(down_weight, kp, ip, jp) += A3D_ELEM(weight, k, i, j);
 		}
 
 		// Then enforce Hermitian symmetry in the downsampled arrays
@@ -714,38 +715,38 @@ namespace relion
 	}
 
 	void BackProjector::calculateDownSampledFourierShellCorrelation(MultidimArray<Complex > &avg1,
-																	MultidimArray<Complex > &avg2,
-																	MultidimArray<DOUBLE> &fsc)
+		MultidimArray<Complex > &avg2,
+		MultidimArray<DOUBLE> &fsc)
 	{
 
 		if (!avg1.sameShape(avg2))
-    		REPORT_ERROR("ERROR BackProjector::calculateDownSampledFourierShellCorrelation: two arrays have different sizes");
+			REPORT_ERROR("ERROR BackProjector::calculateDownSampledFourierShellCorrelation: two arrays have different sizes");
 
 		MultidimArray<DOUBLE> num, den1, den2;
-		num.initZeros(ori_size/2 + 1);
+		num.initZeros(ori_size / 2 + 1);
 		den1.initZeros(num);
 		den2.initZeros(num);
 		fsc.initZeros(num);
 
 		FOR_ALL_ELEMENTS_IN_ARRAY3D(avg1)
 		{
-    		DOUBLE R = sqrt(k*k + i*i + j*j);
+			DOUBLE R = sqrt(k*k + i * i + j * j);
 			if (R > r_max)
 				continue;
-			int idx=ROUND(R);
-			Complex z1=A3D_ELEM(avg1, k, i, j);
-			Complex z2=A3D_ELEM(avg2, k, i, j);
-			DOUBLE absz1=abs(z1);
-			DOUBLE absz2=abs(z2);
-			num(idx)+=(conj(z1) * z2).real;
-			den1(idx)+= absz1*absz1;
-			den2(idx)+= absz2*absz2;
+			int idx = ROUND(R);
+			Complex z1 = A3D_ELEM(avg1, k, i, j);
+			Complex z2 = A3D_ELEM(avg2, k, i, j);
+			DOUBLE absz1 = abs(z1);
+			DOUBLE absz2 = abs(z2);
+			num(idx) += (conj(z1) * z2).real;
+			den1(idx) += absz1 * absz1;
+			den2(idx) += absz2 * absz2;
 		}
 
 		FOR_ALL_ELEMENTS_IN_ARRAY1D(fsc)
 		{
-    		if (den1(i)*den2(i) > 0.)
-    			fsc(i) = num(i)/sqrt(den1(i)*den2(i));
+			if (den1(i)*den2(i) > 0.)
+				fsc(i) = num(i) / sqrt(den1(i)*den2(i));
 		}
 
 		// Always set zero-resolution shell to FSC=1
@@ -757,20 +758,24 @@ namespace relion
 
 
 	void BackProjector::reconstruct(MultidimArray<DOUBLE> &vol_out,
-									int max_iter_preweight,
-									bool do_map,
-									DOUBLE tau2_fudge,
-									MultidimArray<DOUBLE> &tau2,
-									MultidimArray<DOUBLE> &sigma2,
-									MultidimArray<DOUBLE> &data_vs_prior,
-									MultidimArray<DOUBLE> fsc, // only input
-									DOUBLE normalise,
-									bool update_tau2_with_fsc,
-									bool is_whole_instead_of_half,
-									int nr_threads,
-									int minres_map)
+		int max_iter_preweight,
+		bool do_map,
+		DOUBLE tau2_fudge,
+		MultidimArray<DOUBLE> &tau2,
+		MultidimArray<DOUBLE> &sigma2,
+		MultidimArray<DOUBLE> &data_vs_prior,
+		MultidimArray<DOUBLE> fsc, // only input
+		DOUBLE normalise,
+		bool update_tau2_with_fsc,
+		bool is_whole_instead_of_half,
+		int nr_threads,
+		int minres_map)
 
 	{
+
+
+		Image<float> debug_Fnewweight;
+		debug_Fnewweight().resize(weight);
 
 
 		FourierTransformer transformer;
@@ -780,32 +785,36 @@ namespace relion
 		MultidimArray<Complex > Fconv;
 		MultidimArray<DOUBLE> Fweight;
 		// Fnewweight can become too large for a float: always keep this one in double-precision
-		MultidimArray<double> Fnewweight;
+		MultidimArray<float> Fnewweight;
 
 		int max_r2 = r_max * r_max * padding_factor * padding_factor;
 
-	//#define DEBUG_RECONSTRUCT
-	#ifdef DEBUG_RECONSTRUCT
+		//#define DEBUG_RECONSTRUCT
+#ifdef DEBUG_RECONSTRUCT
 		Image<DOUBLE> ttt;
 		FileName fnttt;
-		ttt()=weight;
+		ttt() = weight;
 		ttt.write("reconstruct_initial_weight.spi");
-	#endif
+#endif
+
+		//gtom::WriteMRC(weight.data, gtom::toInt3(XSIZE(weight), YSIZE(weight), ZSIZE(weight)), "d_weight.mrc");
 
 		// At the x=0 line, we have collected either the positive y-z coordinate, or its negative Friedel pair.
 		// Sum these two together for both the data and the weight arrays
 		enforceHermitianSymmetry(data, weight);
 
-	#ifdef DEBUG_RECONSTRUCT
-		ttt()=weight;
+		//gtom::WriteMRC(weight.data, gtom::toInt3(XSIZE(weight), YSIZE(weight), ZSIZE(weight)), "d_weight.mrc");
+
+#ifdef DEBUG_RECONSTRUCT
+		ttt() = weight;
 		ttt.write("reconstruct_hermitian_weight.spi");
-	#endif
+#endif
 
 		// First enforce Hermitian symmetry, then symmetry!
 		// This way the redundancy at the x=0 plane is handled correctly
 		symmetrise(data, weight, max_r2);
-	#ifdef DEBUG_RECONSTRUCT
-		ttt()=weight;
+#ifdef DEBUG_RECONSTRUCT
+		ttt() = weight;
 		ttt.write("reconstruct_symmetrised_weight.spi");
 		FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(data)
 		{
@@ -814,7 +823,7 @@ namespace relion
 		ttt.write("reconstruct_symmetrised_data_real.spi");
 
 		std::cerr << " pad_size= " << pad_size << " padding_factor= " << padding_factor << " max_r2= " << max_r2 << std::endl;
-	#endif
+#endif
 
 
 		// Set Fweight, Fnewweight and Fconv to the right size
@@ -831,8 +840,12 @@ namespace relion
 
 		Fweight.resize(Fconv);
 		Fnewweight.resize(Fconv);
+
+
 		// Go from projector-centered to FFTW-uncentered
-		decenter(weight, Fweight, max_r2);
+		decenter_ff(weight, Fweight, max_r2);
+
+		//gtom::WriteMRC(Fweight.data, gtom::toInt3(XSIZE(Fweight), YSIZE(Fweight), ZSIZE(Fweight)), "d_Fweight.mrc");
 
 		// Take oversampling into account
 		DOUBLE oversampling_correction = (ref_dim == 3) ? (padding_factor * padding_factor * padding_factor) : (padding_factor * padding_factor);
@@ -843,14 +856,14 @@ namespace relion
 		// This is the left-hand side term in the nominator of the Wiener-filter-like update formula
 		// and it is stored inside the weight vector
 		// Then, if (do_map) add the inverse of tau2-spectrum values to the weight
-		sigma2.initZeros(ori_size/2 + 1);
-		counter.initZeros(ori_size/2 + 1);
+		sigma2.initZeros(ori_size / 2 + 1);
+		counter.initZeros(ori_size / 2 + 1);
 		FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Fconv)
 		{
 			int r2 = kp * kp + ip * ip + jp * jp;
 			if (r2 < max_r2)
 			{
-				int ires = ROUND( sqrt((DOUBLE)r2) / padding_factor );
+				int ires = ROUND(sqrt((DOUBLE)r2) / padding_factor);
 				DOUBLE invw = oversampling_correction * DIRECT_A3D_ELEM(Fweight, k, i, j);
 				DIRECT_A1D_ELEM(sigma2, ires) += invw;
 				DIRECT_A1D_ELEM(counter, ires) += 1.;
@@ -873,8 +886,8 @@ namespace relion
 
 		if (update_tau2_with_fsc)
 		{
-			tau2.resize(ori_size/2 + 1);
-			data_vs_prior.initZeros(ori_size/2 + 1);
+			tau2.resize(ori_size / 2 + 1);
+			data_vs_prior.initZeros(ori_size / 2 + 1);
 			// Then calculate new tau2 values, based on the FSC
 			if (!fsc.sameShape(sigma2) || !fsc.sameShape(tau2))
 			{
@@ -910,14 +923,14 @@ namespace relion
 			// Then, add the inverse of tau2-spectrum values to the weight
 			// and also calculate spherical average of data_vs_prior ratios
 			if (!update_tau2_with_fsc)
-				data_vs_prior.initZeros(ori_size/2 + 1);
-			counter.initZeros(ori_size/2 + 1);
+				data_vs_prior.initZeros(ori_size / 2 + 1);
+			counter.initZeros(ori_size / 2 + 1);
 			FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Fconv)
- 			{
+			{
 				int r2 = kp * kp + ip * ip + jp * jp;
 				if (r2 < max_r2)
 				{
-					int ires = ROUND( sqrt((DOUBLE)r2) / padding_factor );
+					int ires = ROUND(sqrt((DOUBLE)r2) / padding_factor);
 					DOUBLE invw = DIRECT_A3D_ELEM(Fweight, k, i, j);
 
 					DOUBLE invtau2;
@@ -929,7 +942,7 @@ namespace relion
 					else if (DIRECT_A1D_ELEM(tau2, ires) == 0.)
 					{
 						// If tau2 is zero, use small value instead
-						invtau2 = 1./ ( 0.001 * invw);
+						invtau2 = 1. / (0.001 * invw);
 					}
 					else
 					{
@@ -972,9 +985,9 @@ namespace relion
 		} //end if do_map
 
 		// Divide both data and Fweight by normalisation factor to prevent FFT's with very large values....
-	#ifdef DEBUG_RECONSTRUCT
+#ifdef DEBUG_RECONSTRUCT
 		std::cerr << " normalise= " << normalise << std::endl;
-	#endif
+#endif
 		FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(Fweight)
 		{
 			DIRECT_MULTIDIM_ELEM(Fweight, n) /= normalise;
@@ -992,20 +1005,24 @@ namespace relion
 			else
 				A3D_ELEM(weight, k, i, j) = 0.;
 		}
-		decenter(weight, Fnewweight, max_r2);
+		decenter_ff(weight, Fnewweight, max_r2);
+
+		//gtom::WriteMRC(Fnewweight.data, gtom::toInt3(XSIZE(Fnewweight), YSIZE(Fnewweight), ZSIZE(Fnewweight)), "d_Fnewweight.mrc");
 
 		// Iterative algorithm as in  Eq. [14] in Pipe & Menon (1999)
 		// or Eq. (4) in Matej (2001)
+		if (false)
 		for (int iter = 0; iter < max_iter_preweight; iter++)
 		{
-
+			//gtom::WriteMRC(Fnewweight.data, gtom::toInt3(XSIZE(Fnewweight), YSIZE(Fnewweight), ZSIZE(Fnewweight)), "d_Fnewweight_pre.mrc");
+			
 			// Set Fnewweight * Fweight in the transformer
 			// In Matej et al (2001), weights w_P^i are convoluted with the kernel,
 			// and the initial w_P^0 are 1 at each sampling point
 			// Here the initial weights are also 1 (see initialisation Fnewweight above),
 			// but each "sampling point" counts "Fweight" times!
 			// That is why Fnewweight is multiplied by Fweight prior to the convolution
-#pragma omp parallel for
+//#pragma omp parallel for
 			FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(Fconv)
 			{
 				DIRECT_MULTIDIM_ELEM(Fconv, n) = DIRECT_MULTIDIM_ELEM(Fnewweight, n) * DIRECT_MULTIDIM_ELEM(Fweight, n);
@@ -1015,7 +1032,7 @@ namespace relion
 			// Note that convoluteRealSpace acts on the complex array inside the transformer
 			convoluteBlobRealSpace(transformer);
 
-#pragma omp parallel for
+//#pragma omp parallel for
 			for (long int k = 0; k < ZSIZE(Fconv); k++)
 			{
 				long int kp = (k < XSIZE(Fconv)) ? k : k - ZSIZE(Fconv);
@@ -1032,28 +1049,36 @@ namespace relion
 						}
 					}
 			}
+
+			//gtom::WriteMRC(Fnewweight.data, gtom::toInt3(XSIZE(Fnewweight), YSIZE(Fnewweight), ZSIZE(Fnewweight)), "d_Fnewweight_post.mrc");
 		}
 
 		// Clear memory
-		Fweight.clear();
 
 		// Note that Fnewweight now holds the approximation of the inverse of the weights on a regular grid
 
 		// Now do the actual reconstruction with the data array
 		// Apply the iteratively determined weight
 		Fconv.initZeros(); // to remove any stuff from the input volume
-		decenter(data, Fconv, max_r2);
+		decenter_cc(data, Fconv, max_r2);
 		FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(Fconv)
 		{
-	#ifdef  FLOAT_PRECISION
-				// Prevent numerical instabilities in single-precision reconstruction with very unevenly sampled orientations
-				if (DIRECT_MULTIDIM_ELEM(Fnewweight, n) > 1e20)
-					DIRECT_MULTIDIM_ELEM(Fnewweight, n) = 1e20;
-	#endif
-			DIRECT_MULTIDIM_ELEM(Fconv, n) *= DIRECT_MULTIDIM_ELEM(Fnewweight, n);
+#ifdef  FLOAT_PRECISION
+			// Prevent numerical instabilities in single-precision reconstruction with very unevenly sampled orientations
+			if (DIRECT_MULTIDIM_ELEM(Fnewweight, n) > 1e20)
+				DIRECT_MULTIDIM_ELEM(Fnewweight, n) = 1e20;
+#endif
+			if (ABS(DIRECT_MULTIDIM_ELEM(Fweight, n)) > 1e-3)
+			{
+				DIRECT_MULTIDIM_ELEM(Fconv, n) *= 1 / DIRECT_MULTIDIM_ELEM(Fweight, n);
+				DIRECT_MULTIDIM_ELEM(Fweight, n) *= 1 / DIRECT_MULTIDIM_ELEM(Fweight, n);
+			}
 		}
 
+		//gtom::WriteMRC(Fweight.data, gtom::toInt3(XSIZE(Fweight), YSIZE(Fweight), ZSIZE(Fweight)), "d_Fweight.mrc");
+
 		// Clear memory
+		Fweight.clear();
 		Fnewweight.clear();
 
 		// rather than doing the blob-convolution to downsample the data array, do a windowing operation:
@@ -1070,7 +1095,7 @@ namespace relion
 		// Pass the transformer to prevent making and clearing a new one before clearing the one declared above....
 		// The latter may give memory problems as detected by electric fence....
 		windowToOridimRealSpace(transformer, Fconv, vol_out, nr_threads);
-		
+
 		// Correct for the linear/nearest-neighbour interpolation that led to the data array
 		griddingCorrect(vol_out);
 
@@ -1089,8 +1114,8 @@ namespace relion
 			transformer.FourierTransform(vol_out, Fconv, false);
 			FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Fconv)
 			{
-	    		long int idx = ROUND(sqrt(kp*kp + ip*ip + jp*jp));
-	    		spectrum(idx) += norm(dAkij(Fconv, k, i, j));
+				long int idx = ROUND(sqrt(kp*kp + ip * ip + jp * jp));
+				spectrum(idx) += norm(dAkij(Fconv, k, i, j));
 				count(idx) += 1.;
 			}
 			spectrum /= count;
@@ -1103,7 +1128,7 @@ namespace relion
 			// New SNR^MAP will be power spectrum divided by the noise in the reconstruction (i.e. sigma2)
 			FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(data_vs_prior)
 			{
-				DIRECT_MULTIDIM_ELEM(tau2, n) =  tau2_fudge * DIRECT_MULTIDIM_ELEM(spectrum, n);
+				DIRECT_MULTIDIM_ELEM(tau2, n) = tau2_fudge * DIRECT_MULTIDIM_ELEM(spectrum, n);
 			}
 
 		}
@@ -1113,10 +1138,10 @@ namespace relion
 	}
 
 	void BackProjector::enforceHermitianSymmetry(MultidimArray<Complex > &my_data,
-												 MultidimArray<DOUBLE> &my_weight)
+		MultidimArray<DOUBLE> &my_weight)
 	{
 
-		for (int iz = STARTINGZ(my_data); iz <=FINISHINGZ(my_data); iz++)
+		for (int iz = STARTINGZ(my_data); iz <= FINISHINGZ(my_data); iz++)
 		{
 			// Make sure all points are only included once.
 			int starty = (iz < 0) ? 0 : 1;
@@ -1135,27 +1160,20 @@ namespace relion
 	}
 
 	void BackProjector::symmetrise(MultidimArray<Complex > &my_data,
-			 MultidimArray<DOUBLE> &my_weight, int my_rmax2)
+		MultidimArray<DOUBLE> &my_weight, int my_rmax2)
 	{
 
-	//#define DEBUG_SYMM
-	#ifdef DEBUG_SYMM
+		//#define DEBUG_SYMM
+#ifdef DEBUG_SYMM
 		std::cerr << " SL.SymsNo()= " << SL.SymsNo() << std::endl;
 		std::cerr << " SL.true_symNo= " << SL.true_symNo << std::endl;
-	#endif
+#endif
 
 		if (SL.SymsNo() > 0 && ref_dim == 3)
 		{
 			Matrix2D<DOUBLE> L(4, 4), R(4, 4); // A matrix from the list
 			MultidimArray<DOUBLE> sum_weight;
 			MultidimArray<Complex > sum_data;
-			DOUBLE x, y, z, fx, fy, fz, xp, yp, zp, r2;
-			bool is_neg_x;
-			int x0, x1, y0, y1, z0, z1;
-    		Complex d000, d001, d010, d011, d100, d101, d110, d111;
-    		Complex dx00, dx01, dx10, dx11, dxy0, dxy1;
-    		DOUBLE dd000, dd001, dd010, dd011, dd100, dd101, dd110, dd111;
-    		DOUBLE ddx00, ddx01, ddx10, ddx11, ddxy0, ddxy1;
 
 			// First symmetry operator (not stored in SL) is the identity matrix
 			sum_weight = my_weight;
@@ -1164,112 +1182,126 @@ namespace relion
 			for (int isym = 0; isym < SL.SymsNo(); isym++)
 			{
 				SL.get_matrices(isym, L, R);
-	#ifdef DEBUG_SYMM
+#ifdef DEBUG_SYMM
 				std::cerr << " isym= " << isym << " R= " << R << std::endl;
-	#endif
+#endif
 
 				// Loop over all points in the output (i.e. rotated, or summed) array
-				FOR_ALL_ELEMENTS_IN_ARRAY3D(sum_weight)
+//#pragma omp parallel for
+				for (long int k = STARTINGZ(sum_weight); k <= FINISHINGZ(sum_weight); k++)
 				{
+					DOUBLE x, y, z, fx, fy, fz, xp, yp, zp, r2;
+					bool is_neg_x;
+					int x0, x1, y0, y1, z0, z1;
+					Complex d000, d001, d010, d011, d100, d101, d110, d111;
+					Complex dx00, dx01, dx10, dx11, dxy0, dxy1;
+					DOUBLE dd000, dd001, dd010, dd011, dd100, dd101, dd110, dd111;
+					DOUBLE ddx00, ddx01, ddx10, ddx11, ddxy0, ddxy1;
 
-	        		x = (DOUBLE)j; // STARTINGX(sum_weight) is zero!
-	        		y = (DOUBLE)i;
-	        		z = (DOUBLE)k;
-	        		r2 = x*x + y*y + z*z;
-	        		if (r2 <= my_rmax2)
-	        		{
-	        			// coords_output(x,y) = A * coords_input (xp,yp)
-						xp = x * R(0, 0) + y * R(0, 1) + z * R(0, 2);
-						yp = x * R(1, 0) + y * R(1, 1) + z * R(1, 2);
-						zp = x * R(2, 0) + y * R(2, 1) + z * R(2, 2);
-
-						// Only asymmetric half is stored
-						if (xp < 0)
+					for (long int i = STARTINGY(sum_weight); i <= FINISHINGY(sum_weight); i++)
+					{
+						for (long int j = STARTINGX(sum_weight); j <= FINISHINGX(sum_weight); j++)
 						{
-							// Get complex conjugated hermitian symmetry pair
-							xp = -xp;
-							yp = -yp;
-							zp = -zp;
-							is_neg_x = true;
+
+							x = (DOUBLE)j; // STARTINGX(sum_weight) is zero!
+							y = (DOUBLE)i;
+							z = (DOUBLE)k;
+							r2 = x * x + y * y + z * z;
+							if (r2 <= my_rmax2)
+							{
+								// coords_output(x,y) = A * coords_input (xp,yp)
+								xp = x * R(0, 0) + y * R(0, 1) + z * R(0, 2);
+								yp = x * R(1, 0) + y * R(1, 1) + z * R(1, 2);
+								zp = x * R(2, 0) + y * R(2, 1) + z * R(2, 2);
+
+								// Only asymmetric half is stored
+								if (xp < 0)
+								{
+									// Get complex conjugated hermitian symmetry pair
+									xp = -xp;
+									yp = -yp;
+									zp = -zp;
+									is_neg_x = true;
+								}
+								else
+								{
+									is_neg_x = false;
+								}
+
+								// Trilinear interpolation (with physical coords)
+								// Subtract STARTINGY and STARTINGZ to accelerate access to data (STARTINGX=0)
+								// In that way use DIRECT_A3D_ELEM, rather than A3D_ELEM
+								x0 = FLOOR(xp);
+								fx = xp - x0;
+								x1 = x0 + 1;
+
+								y0 = FLOOR(yp);
+								fy = yp - y0;
+								y0 -= STARTINGY(my_data);
+								y1 = y0 + 1;
+
+								z0 = FLOOR(zp);
+								fz = zp - z0;
+								z0 -= STARTINGZ(my_data);
+								z1 = z0 + 1;
+
+#ifdef CHECK_SIZE
+								if (x0 < 0 || y0 < 0 || z0 < 0 ||
+									x1 < 0 || y1 < 0 || z1 < 0 ||
+									x0 >= XSIZE(my_data) || y0 >= YSIZE(my_data) || z0 >= ZSIZE(my_data) ||
+									x1 >= XSIZE(my_data) || y1 >= YSIZE(my_data) || z1 >= ZSIZE(my_data))
+								{
+									std::cerr << " x0= " << x0 << " y0= " << y0 << " z0= " << z0 << std::endl;
+									std::cerr << " x1= " << x1 << " y1= " << y1 << " z1= " << z1 << std::endl;
+									my_data.printShape();
+									REPORT_ERROR("BackProjector::symmetrise: checksize!!!");
+								}
+#endif
+								// First interpolate (complex) data
+								d000 = DIRECT_A3D_ELEM(my_data, z0, y0, x0);
+								d001 = DIRECT_A3D_ELEM(my_data, z0, y0, x1);
+								d010 = DIRECT_A3D_ELEM(my_data, z0, y1, x0);
+								d011 = DIRECT_A3D_ELEM(my_data, z0, y1, x1);
+								d100 = DIRECT_A3D_ELEM(my_data, z1, y0, x0);
+								d101 = DIRECT_A3D_ELEM(my_data, z1, y0, x1);
+								d110 = DIRECT_A3D_ELEM(my_data, z1, y1, x0);
+								d111 = DIRECT_A3D_ELEM(my_data, z1, y1, x1);
+
+								dx00 = LIN_INTERP(fx, d000, d001);
+								dx01 = LIN_INTERP(fx, d100, d101);
+								dx10 = LIN_INTERP(fx, d010, d011);
+								dx11 = LIN_INTERP(fx, d110, d111);
+								dxy0 = LIN_INTERP(fy, dx00, dx10);
+								dxy1 = LIN_INTERP(fy, dx01, dx11);
+
+								// Take complex conjugated for half with negative x
+								if (is_neg_x)
+									A3D_ELEM(sum_data, k, i, j) += conj(LIN_INTERP(fz, dxy0, dxy1));
+								else
+									A3D_ELEM(sum_data, k, i, j) += LIN_INTERP(fz, dxy0, dxy1);
+
+								// Then interpolate (real) weight
+								dd000 = DIRECT_A3D_ELEM(my_weight, z0, y0, x0);
+								dd001 = DIRECT_A3D_ELEM(my_weight, z0, y0, x1);
+								dd010 = DIRECT_A3D_ELEM(my_weight, z0, y1, x0);
+								dd011 = DIRECT_A3D_ELEM(my_weight, z0, y1, x1);
+								dd100 = DIRECT_A3D_ELEM(my_weight, z1, y0, x0);
+								dd101 = DIRECT_A3D_ELEM(my_weight, z1, y0, x1);
+								dd110 = DIRECT_A3D_ELEM(my_weight, z1, y1, x0);
+								dd111 = DIRECT_A3D_ELEM(my_weight, z1, y1, x1);
+
+								ddx00 = LIN_INTERP(fx, dd000, dd001);
+								ddx01 = LIN_INTERP(fx, dd100, dd101);
+								ddx10 = LIN_INTERP(fx, dd010, dd011);
+								ddx11 = LIN_INTERP(fx, dd110, dd111);
+								ddxy0 = LIN_INTERP(fy, ddx00, ddx10);
+								ddxy1 = LIN_INTERP(fy, ddx01, ddx11);
+
+								A3D_ELEM(sum_weight, k, i, j) += LIN_INTERP(fz, ddxy0, ddxy1);
+
+							} // end if r2 <= my_rmax2
 						}
-						else
-						{
-							is_neg_x = false;
-						}
-
-						// Trilinear interpolation (with physical coords)
-						// Subtract STARTINGY and STARTINGZ to accelerate access to data (STARTINGX=0)
-						// In that way use DIRECT_A3D_ELEM, rather than A3D_ELEM
-	    				x0 = FLOOR(xp);
-						fx = xp - x0;
-						x1 = x0 + 1;
-
-						y0 = FLOOR(yp);
-						fy = yp - y0;
-						y0 -=  STARTINGY(my_data);
-						y1 = y0 + 1;
-
-						z0 = FLOOR(zp);
-						fz = zp - z0;
-						z0 -= STARTINGZ(my_data);
-						z1 = z0 + 1;
-
-	#ifdef CHECK_SIZE
-						if (x0 < 0 || y0 < 0 || z0 < 0 ||
-							x1 < 0 || y1 < 0 || z1 < 0 ||
-							x0 >= XSIZE(my_data) || y0  >= YSIZE(my_data) || z0 >= ZSIZE(my_data) ||
-							x1 >= XSIZE(my_data) || y1  >= YSIZE(my_data)  || z1 >= ZSIZE(my_data) 	)
-						{
-							std::cerr << " x0= " << x0 << " y0= " << y0 << " z0= " << z0 << std::endl;
-							std::cerr << " x1= " << x1 << " y1= " << y1 << " z1= " << z1 << std::endl;
-							my_data.printShape();
-							REPORT_ERROR("BackProjector::symmetrise: checksize!!!");
-						}
-	#endif
-						// First interpolate (complex) data
-						d000 = DIRECT_A3D_ELEM(my_data, z0, y0, x0);
-						d001 = DIRECT_A3D_ELEM(my_data, z0, y0, x1);
-						d010 = DIRECT_A3D_ELEM(my_data, z0, y1, x0);
-						d011 = DIRECT_A3D_ELEM(my_data, z0, y1, x1);
-						d100 = DIRECT_A3D_ELEM(my_data, z1, y0, x0);
-						d101 = DIRECT_A3D_ELEM(my_data, z1, y0, x1);
-						d110 = DIRECT_A3D_ELEM(my_data, z1, y1, x0);
-						d111 = DIRECT_A3D_ELEM(my_data, z1, y1, x1);
-
-						dx00 = LIN_INTERP(fx, d000, d001);
-						dx01 = LIN_INTERP(fx, d100, d101);
-						dx10 = LIN_INTERP(fx, d010, d011);
-						dx11 = LIN_INTERP(fx, d110, d111);
-						dxy0 = LIN_INTERP(fy, dx00, dx10);
-						dxy1 = LIN_INTERP(fy, dx01, dx11);
-
-						// Take complex conjugated for half with negative x
-						if (is_neg_x)
-							A3D_ELEM(sum_data, k, i, j) += conj(LIN_INTERP(fz, dxy0, dxy1));
-						else
-							A3D_ELEM(sum_data, k, i, j) += LIN_INTERP(fz, dxy0, dxy1);
-
-						// Then interpolate (real) weight
-						dd000 = DIRECT_A3D_ELEM(my_weight, z0, y0, x0);
-						dd001 = DIRECT_A3D_ELEM(my_weight, z0, y0, x1);
-						dd010 = DIRECT_A3D_ELEM(my_weight, z0, y1, x0);
-						dd011 = DIRECT_A3D_ELEM(my_weight, z0, y1, x1);
-						dd100 = DIRECT_A3D_ELEM(my_weight, z1, y0, x0);
-						dd101 = DIRECT_A3D_ELEM(my_weight, z1, y0, x1);
-						dd110 = DIRECT_A3D_ELEM(my_weight, z1, y1, x0);
-						dd111 = DIRECT_A3D_ELEM(my_weight, z1, y1, x1);
-
-						ddx00 = LIN_INTERP(fx, dd000, dd001);
-						ddx01 = LIN_INTERP(fx, dd100, dd101);
-						ddx10 = LIN_INTERP(fx, dd010, dd011);
-						ddx11 = LIN_INTERP(fx, dd110, dd111);
-						ddxy0 = LIN_INTERP(fy, ddx00, ddx10);
-						ddxy1 = LIN_INTERP(fy, ddx01, ddx11);
-
-						A3D_ELEM(sum_weight, k, i, j) +=  LIN_INTERP(fz, ddxy0, ddxy1);
-
-	        		} // end if r2 <= my_rmax2
-
+					}
 				} // end loop over all elements of sum_weight
 
 			} // end loop over symmetry operators
@@ -1281,8 +1313,8 @@ namespace relion
 			/*
 			FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(data)
 			{
-	    		DIRECT_MULTIDIM_ELEM(data, n) = DIRECT_MULTIDIM_ELEM(sum_data, n) / (DOUBLE)(SL.SymsNo() + 1);
-	    		DIRECT_MULTIDIM_ELEM(weight, n) = DIRECT_MULTIDIM_ELEM(sum_weight, n) / (DOUBLE)(SL.SymsNo() + 1);
+				DIRECT_MULTIDIM_ELEM(data, n) = DIRECT_MULTIDIM_ELEM(sum_data, n) / (DOUBLE)(SL.SymsNo() + 1);
+				DIRECT_MULTIDIM_ELEM(weight, n) = DIRECT_MULTIDIM_ELEM(sum_weight, n) / (DOUBLE)(SL.SymsNo() + 1);
 			}
 			*/
 		}
@@ -1297,7 +1329,7 @@ namespace relion
 
 		// Set up right dimension of real-space array
 		// TODO: resize this according to r_max!!!
-		if (ref_dim==2)
+		if (ref_dim == 2)
 			Mconv.resize(pad_size, pad_size);
 		else
 			Mconv.resize(pad_size, pad_size, pad_size);
@@ -1316,21 +1348,21 @@ namespace relion
 		//blob.alpha = 15;
 
 		// Multiply with FT of the blob kernel
-#pragma omp parallel for
+//#pragma omp parallel for
 		FOR_ALL_DIRECT_ELEMENTS_IN_ARRAY3D(Mconv)
 		{
 			int kp = (k < padhdim) ? k : k - pad_size;
 			int ip = (i < padhdim) ? i : i - pad_size;
 			int jp = (j < padhdim) ? j : j - pad_size;
-    		DOUBLE rval = sqrt ( (DOUBLE)(kp * kp + ip * ip + jp * jp) ) / (ori_size * padding_factor);
-    		//if (kp==0 && ip==0 && jp > 0)
+			DOUBLE rval = sqrt((DOUBLE)(kp * kp + ip * ip + jp * jp)) / (ori_size * padding_factor);
+			//if (kp==0 && ip==0 && jp > 0)
 			//	std::cerr << " jp= " << jp << " rval= " << rval << " tab_ftblob(rval) / normftblob= " << tab_ftblob(rval) / normftblob << " ori_size/2= " << ori_size/2 << std::endl;
-    		// In the final reconstruction: mask the real-space map beyond its original size to prevent aliasing ghosts
-    		// Note that rval goes until 1/2 in the oversampled map
-    		if (do_mask && rval > 1./(2. * padding_factor))
-    			DIRECT_A3D_ELEM(Mconv, k, i, j) = 0.;
-    		else
-    			DIRECT_A3D_ELEM(Mconv, k, i, j) *= (tab_ftblob(rval) / normftblob);
+			// In the final reconstruction: mask the real-space map beyond its original size to prevent aliasing ghosts
+			// Note that rval goes until 1/2 in the oversampled map
+			if (do_mask && rval > 1. / (2. * padding_factor))
+				DIRECT_A3D_ELEM(Mconv, k, i, j) = 0.;
+			else
+				DIRECT_A3D_ELEM(Mconv, k, i, j) *= (tab_ftblob(rval) / normftblob);
 		}
 
 		// forward FFT to go back to Fourier-space
@@ -1345,8 +1377,8 @@ namespace relion
 		int padoridim = padding_factor * ori_size;
 		DOUBLE normfft;
 
-	//#define DEBUG_WINDOWORIDIMREALSPACE
-	#ifdef DEBUG_WINDOWORIDIMREALSPACE
+		//#define DEBUG_WINDOWORIDIMREALSPACE
+#ifdef DEBUG_WINDOWORIDIMREALSPACE
 		Image<DOUBLE> tt;
 		tt().resize(ZSIZE(Fin), YSIZE(Fin), XSIZE(Fin));
 		FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(Fin)
@@ -1354,7 +1386,7 @@ namespace relion
 			DIRECT_MULTIDIM_ELEM(tt(), n) = abs(DIRECT_MULTIDIM_ELEM(Fin, n));
 		}
 		tt.write("windoworidim_Fin.spi");
-	#endif
+#endif
 
 		if (ref_dim == 2)
 		{
@@ -1374,37 +1406,40 @@ namespace relion
 		// Resize incoming complex array to the correct size
 		windowFourierTransform(Fin, Ftmp, padoridim);
 
-	#ifdef DEBUG_WINDOWORIDIMREALSPACE
+#ifdef DEBUG_WINDOWORIDIMREALSPACE
 		tt().resize(ZSIZE(Ftmp), YSIZE(Ftmp), XSIZE(Ftmp));
 		FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(Ftmp)
 		{
 			DIRECT_MULTIDIM_ELEM(tt(), n) = abs(DIRECT_MULTIDIM_ELEM(Ftmp, n));
 		}
 		tt.write("windoworidim_Fresized.spi");
-	#endif
+#endif
 
 		// Do the inverse FFT
 		transformer.inverseFourierTransform(Ftmp, Mout);
 		Mout.setXmippOrigin();
 
 		// Shift the map back to its origin
-		CenterFFT(Mout,true);
+		CenterFFT(Mout, true);
 
-	#ifdef DEBUG_WINDOWORIDIMREALSPACE
-		tt()=Mout;
+#ifdef DEBUG_WINDOWORIDIMREALSPACE
+		tt() = Mout;
 		tt.write("windoworidim_Munwindowed.spi");
-	#endif
+#endif
 
 		// Window in real-space
-		if (ref_dim==2)
+		if (padding_factor > 1)
 		{
-			Mout.window(FIRST_XMIPP_INDEX(ori_size), FIRST_XMIPP_INDEX(ori_size),
-						   LAST_XMIPP_INDEX(ori_size), LAST_XMIPP_INDEX(ori_size));
-		}
-		else
-		{
-			Mout.window(FIRST_XMIPP_INDEX(ori_size), FIRST_XMIPP_INDEX(ori_size), FIRST_XMIPP_INDEX(ori_size),
-						   LAST_XMIPP_INDEX(ori_size), LAST_XMIPP_INDEX(ori_size), LAST_XMIPP_INDEX(ori_size));
+			if (ref_dim == 2)
+			{
+				Mout.window(FIRST_XMIPP_INDEX(ori_size), FIRST_XMIPP_INDEX(ori_size),
+					LAST_XMIPP_INDEX(ori_size), LAST_XMIPP_INDEX(ori_size));
+			}
+			else
+			{
+				Mout.window(FIRST_XMIPP_INDEX(ori_size), FIRST_XMIPP_INDEX(ori_size), FIRST_XMIPP_INDEX(ori_size),
+					LAST_XMIPP_INDEX(ori_size), LAST_XMIPP_INDEX(ori_size), LAST_XMIPP_INDEX(ori_size));
+			}
 		}
 		Mout.setXmippOrigin();
 
@@ -1412,16 +1447,16 @@ namespace relion
 		// The Fourier Transforms are all "normalised" for 2D transforms of size = ori_size x ori_size
 		Mout /= normfft;
 
-	#ifdef DEBUG_WINDOWORIDIMREALSPACE
-		tt()=Mout;
+#ifdef DEBUG_WINDOWORIDIMREALSPACE
+		tt() = Mout;
 		tt.write("windoworidim_Mwindowed.spi");
-	#endif
+#endif
 
 		// Mask out corners to prevent aliasing artefacts
 		softMaskOutsideMap(Mout);
 
-	#ifdef DEBUG_WINDOWORIDIMREALSPACE
-		tt()=Mout;
+#ifdef DEBUG_WINDOWORIDIMREALSPACE
+		tt() = Mout;
 		tt.write("windoworidim_Mwindowed_masked.spi");
 		FourierTransformer ttf;
 		ttf.FourierTransform(Mout, Ftmp);
@@ -1431,7 +1466,7 @@ namespace relion
 			DIRECT_MULTIDIM_ELEM(tt(), n) = abs(DIRECT_MULTIDIM_ELEM(Ftmp, n));
 		}
 		tt.write("windoworidim_Fnew.spi");
-	#endif
+#endif
 
 
 	}

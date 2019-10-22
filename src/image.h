@@ -56,6 +56,7 @@
 #include "src/filename.h"
 #include "src/multidim_array.h"
 #include "src/transformations.h"
+#include "src/metadata_table.h"
 #include "src/fftw.h"
 
 
@@ -126,6 +127,7 @@ namespace relion
 	{
 	public:
 		MultidimArray<T>    data;        // The image data array
+		MetaDataTable MDMainHeader;      // metadata for the file
 
 	private:
 		FileName            filename;    // File name
@@ -211,6 +213,8 @@ namespace relion
 		{
 			clear();
 		}
+
+		#include "src/rwMRC.h"
 
 		/** Is this file an image
 		 *
@@ -1107,7 +1111,121 @@ namespace relion
 		void _write(const FileName &name, fImageHandler* hFile, long int select_img = -1,
 			bool isStack = false, int mode = WRITE_OVERWRITE)
 		{
-			REPORT_ERROR("Not on Windows.");
+			int err = 0;
+
+			FileName ext_name = hFile->ext_name;
+			fimg = hFile->fimg;
+			fhed = hFile->fhed;
+			_exists = hFile->exist;
+
+			filename = name;
+
+			long int aux;
+			FileName filNamePlusExt(name);
+			name.decompose(aux, filNamePlusExt);
+			// Subtract 1 to have numbering 0...N-1 instead of 1...N
+			if (aux > 0)
+				aux--;
+
+			if (select_img == -1)
+				select_img = aux;
+
+			size_t found = filNamePlusExt.find_first_of("%");
+
+			std::string imParam = "";
+
+			if (found != std::string::npos)
+			{
+				imParam = filNamePlusExt.substr(found + 1).c_str();
+				filNamePlusExt = filNamePlusExt.substr(0, found);
+			}
+
+			found = filNamePlusExt.find_first_of(":");
+			if (found != std::string::npos)
+				filNamePlusExt = filNamePlusExt.substr(0, found);
+
+			//#define DEBUG
+#ifdef DEBUG
+
+			std::cerr << "write" << std::endl;
+			std::cerr << "extension for write= " << ext_name << std::endl;
+			std::cerr << "filename= " << filename << std::endl;
+			std::cerr << "mode= " << mode << std::endl;
+			std::cerr << "isStack= " << isStack << std::endl;
+			std::cerr << "select_img= " << select_img << std::endl;
+#endif
+#undef DEBUG
+			// Check that image is not empty
+			if (getSize() < 1)
+				REPORT_ERROR("write Image ERROR: image is empty!");
+
+			// CHECK FOR INCONSISTENCIES BETWEEN data.xdim and x, etc???
+			int Xdim, Ydim, Zdim;
+			long int Ndim;
+			this->getDimensions(Xdim, Ydim, Zdim, Ndim);
+
+			Image<T> auxI;
+			replaceNsize = 0;//reset replaceNsize in case image is reused
+			if (select_img == -1 && mode == WRITE_REPLACE)
+				REPORT_ERROR("write: Please specify object to be replaced");
+			else if (!_exists && mode == WRITE_REPLACE)
+			{
+				std::stringstream replace_number;
+				replace_number << select_img;
+				REPORT_ERROR((std::string)"Cannot replace object number: "
+					+ replace_number.str()
+					+ " in file " + filename
+					+ ". It does not exist");
+			}
+			else if (_exists && (mode == WRITE_REPLACE || mode == WRITE_APPEND))
+			{
+				auxI.dataflag = -2;
+				auxI.read(filNamePlusExt, false);
+				int _Xdim, _Ydim, _Zdim;
+				long int _Ndim;
+				auxI.getDimensions(_Xdim, _Ydim, _Zdim, _Ndim);
+				replaceNsize = _Ndim;
+				if (Xdim != _Xdim ||
+					Ydim != _Ydim ||
+					Zdim != _Zdim
+					)
+					REPORT_ERROR("write: target and source objects have different size");
+				if (mode == WRITE_REPLACE && select_img > _Ndim)
+					REPORT_ERROR("write: cannot replace image stack is not large enough");
+				if (auxI.replaceNsize < 1 &&
+					(mode == WRITE_REPLACE || mode == WRITE_APPEND))
+					REPORT_ERROR("write: output file is not an stack");
+			}
+			else if (!_exists && mode == WRITE_APPEND)
+			{
+				;
+			}
+			else if (mode == WRITE_READONLY)//If new file we are in the WRITE_OVERWRITE mode
+			{
+				REPORT_ERROR((std::string) "File " + name
+					+ " opened in read-only mode. Cannot write.");
+			}
+
+			/*
+			 * SELECT FORMAT
+			 */
+			if (ext_name.contains("mrcs"))
+				writeMRC(select_img, true, mode);
+			else if (ext_name.contains("mrc"))
+				writeMRC(select_img, false, mode);
+			else
+				writeMRC(select_img, false, mode);
+			if (err < 0)
+			{
+				std::cerr << " Filename = " << filename << " Extension= " << ext_name << std::endl;
+				REPORT_ERROR((std::string)"Error writing file " + filename + " Extension= " + ext_name);
+			}
+
+			/* If initially the file did not existed, once the first image is written,
+			 * then the file exists
+			 */
+			if (!_exists)
+				hFile->exist = _exists = true;
 		}
 
 
