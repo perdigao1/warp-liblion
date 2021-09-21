@@ -21,8 +21,12 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+bld/
 
-fftw-back/
+fftw/
+fftw*/
+
+temp/
 
 # Visual Studio 2015 cache/options directory
 .vs/

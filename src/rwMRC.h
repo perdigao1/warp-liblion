@@ -240,7 +240,7 @@
 		}
 		offset = MRCSIZE + header->nsymbt;
 
-		MDMainHeader.setValue(EMDL_IMAGE_STATS_MIN, (DOUBLE)header->amin);
+		/*MDMainHeader.setValue(EMDL_IMAGE_STATS_MIN, (DOUBLE)header->amin);
 		MDMainHeader.setValue(EMDL_IMAGE_STATS_MAX, (DOUBLE)header->amax);
 		MDMainHeader.setValue(EMDL_IMAGE_STATS_AVG, (DOUBLE)header->amean);
 		MDMainHeader.setValue(EMDL_IMAGE_STATS_STDDEV, (DOUBLE)header->arms);
@@ -251,7 +251,7 @@
 		if (header->my && header->b != 0)//yx
 			MDMainHeader.setValue(EMDL_IMAGE_SAMPLINGRATE_Y, (DOUBLE)header->b / header->my);
 		if (header->mz && header->c != 0)//zx
-			MDMainHeader.setValue(EMDL_IMAGE_SAMPLINGRATE_Z, (DOUBLE)header->c / header->mz);
+			MDMainHeader.setValue(EMDL_IMAGE_SAMPLINGRATE_Z, (DOUBLE)header->c / header->mz);*/
 
 		if (isStack && dataflag < 0)   // Don't read the individual header and the data if not necessary
 		{
@@ -261,7 +261,7 @@
 
 		//#define DEBUG
 #ifdef DEBUG
-		MDMainHeader.write(std::cerr);
+		//MDMainHeader.write(std::cerr);
 		MD[0].write(std::cerr);
 #endif
 
@@ -354,7 +354,7 @@
 		header->beta = (float)90.;
 		header->gamma = (float)90.;
 
-		if (!MDMainHeader.isEmpty())
+		/*if (!MDMainHeader.isEmpty())
 		{
 			if (MDMainHeader.getValue(EMDL_IMAGE_STATS_MIN, aux))
 				header->amin = (float)aux;
@@ -403,7 +403,7 @@
 				header->c = (float)aux2*header->nz;
 			}
 
-		}
+		}*/
 
 		header->nsymbt = 0;
 

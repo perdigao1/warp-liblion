@@ -406,7 +406,11 @@ namespace relion
 		if (c == '\"' || c == '\'')
 			retval = retval.substr(0, retval.length() - 1);
 		free(*_str);
-		*_str = _strdup(retval.c_str());
+		#ifdef _WIN32
+			*_str = _strdup(retval.c_str());
+		#else
+			*_str = strdup(retval.c_str());
+		#endif
 	}
 
 	// Split a string ==========================================================

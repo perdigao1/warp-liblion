@@ -49,6 +49,10 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
+#ifndef _WIN32
+	#include <sys/mman.h>
+#endif
+
 #include <typeinfo>
 #include <fcntl.h>
 #include "src/funcs.h"
@@ -127,7 +131,7 @@ namespace relion
 	{
 	public:
 		MultidimArray<T>    data;        // The image data array
-		MetaDataTable MDMainHeader;      // metadata for the file
+		//MetaDataTable MDMainHeader;      // metadata for the file
 
 	private:
 		FileName            filename;    // File name
@@ -158,7 +162,7 @@ namespace relion
 		{
 			mmapOn = false;
 			clear();
-			MDMainHeader.addObject();
+			//MDMainHeader.addObject();
 		}
 
 		/** Constructor with size
@@ -175,7 +179,7 @@ namespace relion
 			mmapOn = false;
 			clear();
 			data.resize(Ndim, Zdim, Ydim, Xdim);
-			MDMainHeader.addObject();
+			//MDMainHeader.addObject();
 		}
 
 		/** Clear.
@@ -204,7 +208,7 @@ namespace relion
 		 */
 		void clearHeader()
 		{
-			MDMainHeader.clear();
+			//MDMainHeader.clear();
 		}
 
 		/** Destructor.
@@ -865,7 +869,7 @@ namespace relion
 		int dataType() const
 		{
 			int dummy;
-			MDMainHeader.getValue(EMDL_IMAGE_DATATYPE, dummy);
+			//MDMainHeader.getValue(EMDL_IMAGE_DATATYPE, dummy);
 			return dummy;
 		}
 
@@ -878,7 +882,7 @@ namespace relion
 		DOUBLE samplingRateX(const long int n = 0) const
 		{
 			DOUBLE dummy = 1.;
-			MDMainHeader.getValue(EMDL_IMAGE_SAMPLINGRATE_X, dummy);
+			//MDMainHeader.getValue(EMDL_IMAGE_SAMPLINGRATE_X, dummy);
 			return dummy;
 		}
 
@@ -891,7 +895,7 @@ namespace relion
 		DOUBLE samplingRateY(const long int n = 0) const
 		{
 			DOUBLE dummy = 1.;
-			MDMainHeader.getValue(EMDL_IMAGE_SAMPLINGRATE_Y, dummy);
+			//MDMainHeader.getValue(EMDL_IMAGE_SAMPLINGRATE_Y, dummy);
 			return dummy;
 		}
 
@@ -909,23 +913,23 @@ namespace relion
 		{
 			DOUBLE avg, stddev, minval, maxval;
 			data.computeStats(avg, stddev, minval, maxval);
-			MDMainHeader.setValue(EMDL_IMAGE_STATS_AVG, avg);
-			MDMainHeader.setValue(EMDL_IMAGE_STATS_STDDEV, stddev);
-			MDMainHeader.setValue(EMDL_IMAGE_STATS_MIN, minval);
-			MDMainHeader.setValue(EMDL_IMAGE_STATS_MAX, maxval);
+			//MDMainHeader.setValue(EMDL_IMAGE_STATS_AVG, avg);
+			//MDMainHeader.setValue(EMDL_IMAGE_STATS_STDDEV, stddev);
+			//MDMainHeader.setValue(EMDL_IMAGE_STATS_MIN, minval);
+			//MDMainHeader.setValue(EMDL_IMAGE_STATS_MAX, maxval);
 		}
 
 		void setSamplingRateInHeader(DOUBLE rate_x, DOUBLE rate_y = -1., DOUBLE rate_z = -1.)
 		{
-			MDMainHeader.setValue(EMDL_IMAGE_SAMPLINGRATE_X, rate_x);
+			//MDMainHeader.setValue(EMDL_IMAGE_SAMPLINGRATE_X, rate_x);
 			if (rate_y < 0.)
 				rate_y = rate_x;
-			MDMainHeader.setValue(EMDL_IMAGE_SAMPLINGRATE_Y, rate_y);
+			//MDMainHeader.setValue(EMDL_IMAGE_SAMPLINGRATE_Y, rate_y);
 			if (ZSIZE(data) > 1)
 			{
 				if (rate_z < 0.)
 					rate_z = rate_x;
-				MDMainHeader.setValue(EMDL_IMAGE_SAMPLINGRATE_Z, rate_z);
+				//MDMainHeader.setValue(EMDL_IMAGE_SAMPLINGRATE_Z, rate_z);
 			}
 		}
 

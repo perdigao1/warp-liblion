@@ -1187,7 +1187,7 @@ namespace relion
 #endif
 
 				// Loop over all points in the output (i.e. rotated, or summed) array
-//#pragma omp parallel for
+#pragma omp parallel for
 				for (long int k = STARTINGZ(sum_weight); k <= FINISHINGZ(sum_weight); k++)
 				{
 					DOUBLE x, y, z, fx, fy, fz, xp, yp, zp, r2;
